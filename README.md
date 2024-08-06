@@ -10,7 +10,10 @@ Join Inceptez! Master Python, statistics, ML, MLOps, cloud computing, deep learn
 # Prerequisites
 The Data Science curriculum assumes the learner has taken basic school math and stats(not compulsory).
 
-<br>
+<be>
+
+# RoadMap
+* [RoadMap](https://docs.google.com/spreadsheets/d/13EVKNbPUYTKVL8lcT3-x1Cf8fL5pxiTrI9MRI6wUeg4/edit?usp=sharing)
 
 # Curriculum
 * [Python for Data Science](https://github.com/nursnaaz/FutureDataScienceLegends/tree/main/01.%20Python)
