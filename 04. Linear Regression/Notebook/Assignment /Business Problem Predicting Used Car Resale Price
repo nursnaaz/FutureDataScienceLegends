@@ -1,0 +1,26 @@
+Business Problem: Predicting Used Car Resale Prices
+Scenario:
+You work for a used car dealership that wants to predict the resale prices of cars based on several features such as the car's age, mileage, brand, fuel type, etc. The goal is to help the dealership price their cars competitively and provide accurate quotes to customers.
+
+Dataset Features:
+The dataset will contain 5,000 samples and the following features:
+
+CarAge (Numeric): The age of the car in years, with some outliers.
+Mileage (Numeric): The total mileage driven by the car, with some missing values.
+Brand (Categorical): The brand of the car, with multiple categories.
+FuelType (Categorical): The type of fuel used by the car (Petrol, Diesel, Electric, etc.).
+Transmission (Categorical): The type of transmission (Manual, Automatic).
+OwnerCount (Numeric): The number of previous owners, with missing values.
+EngineSize (Numeric): The size of the car's engine in liters, with outliers.
+Horsepower (Numeric): The car's horsepower, with missing values.
+CarCondition (Categorical): The condition of the car (Poor, Fair, Good, Excellent).
+ResalePrice (Numeric - Target Variable): The target variable representing the resale price of the car.
+Preprocessing Techniques to Implement:
+Handling Missing Values: Impute missing values in Mileage, OwnerCount, and Horsepower.
+Encoding Categorical Variables: Encode Brand, FuelType, Transmission, and CarCondition features.
+Scaling Numeric Features: Scale CarAge, Mileage, EngineSize, Horsepower.
+Outlier Detection and Treatment: Detect and handle outliers in CarAge, EngineSize, and Mileage.
+Feature Engineering: Create new features like Age_Mileage_Ratio and interaction terms between EngineSize and Horsepower.
+Feature Selection: Remove irrelevant features and select the most important ones.
+Dealing with Multicollinearity: Check for multicollinearity among features.
+Handling High Cardinality Categorical Variables: Use target encoding or frequency encoding for high cardinality in Brand.
