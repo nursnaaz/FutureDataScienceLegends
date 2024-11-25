@@ -1,0 +1,25 @@
+
+# Terminal commands
+
+# Run API
+uvicorn model_app:app --reload
+
+# Run WebApp
+streamlit run webview.py
+
+# Docker commands
+
+# Docker local build
+docker build -t stream-test1:1.0 .
+
+# Docker local run
+docker run -p 80:80 stream-test1:1.0 
+
+# Login to push build to docker hub
+docker login
+
+# Create tag for docker hub
+docker tag stream-test1:1.0 zmzia/stream-test1:1.0
+
+# Docker push to docker hub
+docker push zmzia/stream-test1:1.0
