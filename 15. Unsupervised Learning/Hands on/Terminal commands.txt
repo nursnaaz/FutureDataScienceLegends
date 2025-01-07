@@ -1,0 +1,38 @@
+=======================================================
+Commands to run while using your local PC/Laptop
+=======================================================
+
+Command to run the webserver
+----------------------------
+streamlit run model_app.py
+
+
+command to get external i/p address of your system
+--------------------------------------------------
+curl ipv4.icanhazip.com
+
+
+Command to run to get the public endpoint
+-----------------------------------------
+npx localtunnel --port 8501
+
+Below is the output you receive: 
+your url is: https://tender-lights-admire.loca.lt
+
+========================================================
+
+
+========================================================
+Commands to run while using google colab 
+========================================================
+
+command to get external i/p address of colab session
+----------------------------------------------------
+!curl ipv4.icanhazip.com
+
+
+Command to run the webserver and get the public endpoint
+--------------------------------------------------------
+streamlit run model_app.py & npx localtunnel --port 8501
+
+=========================================================
