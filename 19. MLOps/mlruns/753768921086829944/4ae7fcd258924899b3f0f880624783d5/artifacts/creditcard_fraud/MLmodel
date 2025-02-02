@@ -1,0 +1,40 @@
+artifact_path: creditcard_fraud
+flavors:
+  python_function:
+    env:
+      conda: conda.yaml
+      virtualenv: python_env.yaml
+    loader_module: mlflow.sklearn
+    model_path: model.pkl
+    predict_fn: predict
+    python_version: 3.9.13
+  sklearn:
+    code: null
+    pickled_model: model.pkl
+    serialization_format: cloudpickle
+    sklearn_version: 1.2.2
+mlflow_version: 2.9.1
+model_size_bytes: 493804
+model_uuid: ef245494157c4ec8a84bae173ef68db3
+run_id: 4ae7fcd258924899b3f0f880624783d5
+saved_input_example_info:
+  artifact_path: input_example.json
+  pandas_orient: split
+  type: dataframe
+signature:
+  inputs: '[{"type": "double", "name": "Time"}, {"type": "double", "name": "V1"},
+    {"type": "double", "name": "V2"}, {"type": "double", "name": "V3"}, {"type": "double",
+    "name": "V4"}, {"type": "double", "name": "V5"}, {"type": "double", "name": "V6"},
+    {"type": "double", "name": "V7"}, {"type": "double", "name": "V8"}, {"type": "double",
+    "name": "V9"}, {"type": "double", "name": "V10"}, {"type": "double", "name": "V11"},
+    {"type": "double", "name": "V12"}, {"type": "double", "name": "V13"}, {"type":
+    "double", "name": "V14"}, {"type": "double", "name": "V15"}, {"type": "double",
+    "name": "V16"}, {"type": "double", "name": "V17"}, {"type": "double", "name":
+    "V18"}, {"type": "double", "name": "V19"}, {"type": "double", "name": "V20"},
+    {"type": "double", "name": "V21"}, {"type": "double", "name": "V22"}, {"type":
+    "double", "name": "V23"}, {"type": "double", "name": "V24"}, {"type": "double",
+    "name": "V25"}, {"type": "double", "name": "V26"}, {"type": "double", "name":
+    "V27"}, {"type": "double", "name": "V28"}, {"type": "double", "name": "Amount"}]'
+  outputs: '[{"type": "tensor", "tensor-spec": {"dtype": "int64", "shape": [-1]}}]'
+  params: null
+utc_time_created: '2025-02-02 05:54:01.824832'

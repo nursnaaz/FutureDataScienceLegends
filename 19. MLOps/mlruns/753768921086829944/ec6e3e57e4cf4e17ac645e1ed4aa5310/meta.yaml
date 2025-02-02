@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/mohamednoordeenalaudeen/Documents/Inceptez%20Batch%2021/MLOps/mlruns/753768921086829944/ec6e3e57e4cf4e17ac645e1ed4aa5310/artifacts
+end_time: 1738475648675
+entry_point_name: ''
+experiment_id: '753768921086829944'
+lifecycle_stage: active
+run_id: ec6e3e57e4cf4e17ac645e1ed4aa5310
+run_name: rf:Critentropymf:log2md2
+run_uuid: ec6e3e57e4cf4e17ac645e1ed4aa5310
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1738475645047
+status: 3
+tags: []
+user_id: mohamednoordeenalaudeen
