@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/mohamednoordeenalaudeen/Documents/Inceptez%20Batch%2021/MLOps/mlruns/753768921086829944/7ba43771c9c641689d85838f61206696/artifacts
+end_time: 1738471909549
+entry_point_name: ''
+experiment_id: '753768921086829944'
+lifecycle_stage: active
+run_id: 7ba43771c9c641689d85838f61206696
+run_name: Manual grid search
+run_uuid: 7ba43771c9c641689d85838f61206696
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1738471909488
+status: 4
+tags: []
+user_id: mohamednoordeenalaudeen
