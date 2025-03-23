@@ -1,0 +1,36 @@
+# Key Guidelines for Technical Interviews
+## Based on Mock Interview Assessment
+
+### Project Presentation
+1. **Select impactful projects** with strong domain relevance and significant business impact for your portfolio
+2. **Prepare end-to-end explanations** that clearly articulate the problem, approach, implementation, and results
+3. **Establish realistic timelines** - aim for 2-3 months for complex projects rather than promising unrealistic shorter delivery periods
+4. **Articulate business impact** in quantifiable terms wherever possible
+
+### Technical Communication
+1. **Provide depth in technical explanations** - go beyond surface-level descriptions of technologies used
+2. **Use professional language** in technical discussions:
+   * Avoid personal pronouns "I" and "We" when describing technical solutions
+   * Instead of: "I designed a data pipeline using Spark"
+   * Preferred: "The solution involved designing a data pipeline using Spark"
+3. **Be precise with technical terminology**:
+   * Define classification labels clearly
+   * Explain algorithms accurately (e.g., F1 score formula)
+   * Specify exact parameters and methods used
+
+### Data Science Specifics
+1. **Feature selection** - justify your approach and use sufficient variables (more than just 7 columns)
+2. **Clearly define target variables** - be specific about what you're predicting and how it's measured
+3. **Accurately explain evaluation metrics** - know formulas like F1 score: 2 * (Precision * Recall) / (Precision + Recall)
+4. **Describe the complete modeling process** - from data preparation through validation
+
+### Professional Presence
+1. **Maintain consistency** in explanations throughout the interview
+2. **Project confidence** without downplaying your experience
+3. **Speak with appropriate tone** and patience when answering questions
+4. **Balance humility with accurate representation** of your skills and contributions
+
+### Resume Alignment
+1. **Be prepared to explain every technical term** on your resume in detail
+2. **Ensure job titles and roles claimed** can be substantiated by your knowledge
+3. **Provide clear examples** that demonstrate skills listed on your resume

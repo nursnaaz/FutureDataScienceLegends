@@ -1,0 +1,14 @@
+aliases: []
+creation_timestamp: 1738475588940
+current_stage: None
+description: null
+last_updated_timestamp: 1738475588940
+name: CreditCard Fraud Experiment in Inceptez
+run_id: 9731674880684b919af1be6d0a55ce2f
+run_link: null
+source: file:///Users/mohamednoordeenalaudeen/Documents/Inceptez%20Batch%2021/MLOps/mlruns/753768921086829944/9731674880684b919af1be6d0a55ce2f/artifacts/creditcard_fraud
+status: READY
+status_message: null
+storage_location: file:///Users/mohamednoordeenalaudeen/Documents/Inceptez%20Batch%2021/MLOps/mlruns/753768921086829944/9731674880684b919af1be6d0a55ce2f/artifacts/creditcard_fraud
+user_id: null
+version: 41

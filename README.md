@@ -42,4 +42,14 @@ The Data Science curriculum assumes the learner has taken basic school math and 
   
 # Machine Learning
 * [Linear Regression](https://github.com/nursnaaz/FutureDataScienceLegends/tree/main/04.%20Linear%20Regression)
+* [Docker FastAPI Cloud Deployement](https://github.com/nursnaaz/FutureDataScienceLegends/tree/main/05.%20DockerFastAPICloudRunDeployement)
+* [Polynomial Regression](https://github.com/nursnaaz/FutureDataScienceLegends/tree/main/06.%20Polynomial%20Regression)
+* [Ovefitting and Regularization](https://github.com/nursnaaz/FutureDataScienceLegends/tree/main/07.%20Ovefitting%20and%20Regularization)
+* [Logistic Regression](https://github.com/nursnaaz/FutureDataScienceLegends/tree/main/08.%20Logistic%20Regression)
+* [K Nearest Neighbors](https://github.com/nursnaaz/FutureDataScienceLegends/tree/main/09.%20KNN)
+* [Naive Bayes](https://github.com/nursnaaz/FutureDataScienceLegends/tree/main/10.%20Naive%20Bayes)
+* [Support Vector Machine](https://github.com/nursnaaz/FutureDataScienceLegends/tree/main/11.%20Support%20Vector%20Machine)
+* [Decision Tree](https://github.com/nursnaaz/FutureDataScienceLegends/tree/main/12.%20Decision%20Tree)
+* [RandomForest](https://github.com/nursnaaz/FutureDataScienceLegends/tree/main/13.%20RandomForest)
 
+  

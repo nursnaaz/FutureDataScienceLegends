@@ -1,0 +1,131 @@
+# to check the version of python
+python --version
+
+# to create a virtual environment 
+python -m venv demo
+
+# to show the list of installed libraries
+pip list
+
+# to link the virtual envrionment to the jupyter notebook kernel
+python -m ipykernel install --user --name demo --display-name "Python(demo)"
+
+pip install ipykernel
+
+
+from sklearn import datasets
+from sklearn.model_selection import train_test_split
+
+# load a dataset
+iris = datasets.load_iris()
+
+X = iris.data
+
+y = iris.target
+
+X[0]
+
+y[0]
+
+y
+
+
+
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.metrics import f1_score, accuracy_score
+
+import warnings
+warnings.filterwarnings('ignore')
+
+X_train, X_test, y_train, y_test = train_test_split(X,y, test_size=0.2, random_state=42)
+
+# model instanatiation and model fitting
+model = DecisionTreeClassifier(min_samples_split=100)
+model.fit(X_train, y_train)
+
+# prediction
+y_pred = model.predict(X_test)
+y_pred
+
+# original values
+y_test
+
+# size of the datasets
+len(X), len(X_train), len(X_test)
+
+confusion_matrix(y_test, y_pred)
+
+        0    1   2
+array([[10,  0,  0],  0
+       [ 0,  9,  0],  1
+       [ 0, 11,  0]]) 2
+
+print(classification_report(y_test, y_pred))
+
+print('prec:',10/10, 9/20, 0/0.0001)
+print('recal:',10/10, 9/9, 0/11, 19/30)
+
+
+act = [1, 0, 2, 1, 1, 0, 1, 2, 1, 1, 2, 0, 0, 0, 0, 1, 2, 1, 1, 2, 0, 2, 0, 2, 2, 2, 2, 2, 0, 0]
+pred= [1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 0]
+
+ACT
+0 = 10
+1 = 9
+2 = 11
+
+PRED
+0=10
+1=20
+2=0
+
+TP/
+TP+FP
+
+import mlflow
+
+mlflow.set_tracking_uri("http://127.0.0.1:5000")
+
+exp = mlflow.set_experiment("demo1")
+
+with mlflow.start_run(experiment_id = exp.experiment_id, run_name='myrun1'):
+    mlflow.log_params({
+        "min_samples_split": model.min_samples_split
+    })
+    
+    mlflow.log_metric("accuracy",accuracy)
+    mlflow.log_metric("f1score",f1score)
+    
+    mlflow.sklearn.log_model(model,"mymodel")
+    
+    print("accuracy", accuracy)
+    print("f1_score", f1score)
+
+
+username:ubuntu
+
+
+
+python --version
+
+sudo apt update
+
+sudo apt install python3-pip
+
+sudo apt install python3-virtualenv
+
+virtualenv env1
+
+cd env1/bin
+
+source activate
+
+pip install mlflow
+
+
+mlflow.set_tracking_uri("http://35.154.177.116:5000")
+exp = mlflow.set_experiment("demo1")
+
+changes below:***********
+model = DecisionTreeClassifier(min_samples_split=20)  --- change param value: 1-99
+with mlflow.start_run(experiment_id = exp.experiment_id, run_name='zia-myrun1'): -- change the runname starting with ur name
