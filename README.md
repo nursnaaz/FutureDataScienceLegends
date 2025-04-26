@@ -15,7 +15,9 @@ The Data Science curriculum assumes the learner has taken basic school math and 
 # RoadMap
 * [RoadMap](https://docs.google.com/spreadsheets/d/13EVKNbPUYTKVL8lcT3-x1Cf8fL5pxiTrI9MRI6wUeg4/edit?usp=sharing)
 * [Short Plan](https://docs.google.com/spreadsheets/d/1uiSSkVBZzVCmpc6ewM5y4ZoRCWGRDk08o-Pk_2q5BcU/)
-* 
+* [DeepLearning Plan](https://docs.google.com/spreadsheets/d/18r94CytRiFCf7WKfiGqKbCNywhoxNuqJ/edit?usp=sharing&ouid=113375722781003774560&rtpof=true&sd=true)
+
+  
 # Curriculum
 * [Python for Data Science](https://github.com/nursnaaz/FutureDataScienceLegends/tree/main/01.%20Python)
 * [Introduction to Statistics](https://github.com/nursnaaz/FutureDataScienceLegends/tree/main/02.%20Statistics)

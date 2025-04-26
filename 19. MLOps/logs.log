@@ -1,0 +1,29 @@
+2025-02-02 10:43:03,422:WARNING:
+'cuml' is a soft dependency and not included in the pycaret installation. Please run: `pip install cuml` to install.
+2025-02-02 10:43:03,422:WARNING:
+'cuml' is a soft dependency and not included in the pycaret installation. Please run: `pip install cuml` to install.
+2025-02-02 10:43:03,422:WARNING:
+'cuml' is a soft dependency and not included in the pycaret installation. Please run: `pip install cuml` to install.
+2025-02-02 10:43:03,422:WARNING:
+'cuml' is a soft dependency and not included in the pycaret installation. Please run: `pip install cuml` to install.
+2025-02-02 10:46:11,757:INFO:PyCaret ClassificationExperiment
+2025-02-02 10:46:11,757:INFO:Logging name: CreditCard Fraud Experiment in Inceptez
+2025-02-02 10:46:11,757:INFO:ML Usecase: MLUsecase.CLASSIFICATION
+2025-02-02 10:46:11,758:INFO:version 3.1.0
+2025-02-02 10:46:11,758:INFO:Initializing setup()
+2025-02-02 10:46:11,758:INFO:self.USI: 6a4d
+2025-02-02 10:46:11,758:INFO:self._variable_keys: {'gpu_param', 'gpu_n_jobs_param', 'y_test', 'exp_id', 'y', 'X', 'data', 'is_multiclass', 'USI', 'fold_shuffle_param', 'y_train', 'idx', 'fix_imbalance', 'logging_param', 'n_jobs_param', 'X_test', 'fold_generator', '_available_plots', 'X_train', 'target_param', 'exp_name_log', '_ml_usecase', 'memory', 'fold_groups_param', 'pipeline', 'seed', 'html_param', 'log_plots_param'}
+2025-02-02 10:46:11,758:INFO:Checking environment
+2025-02-02 10:46:11,758:INFO:python_version: 3.9.13
+2025-02-02 10:46:11,758:INFO:python_build: ('main', 'Aug 25 2022 18:29:29')
+2025-02-02 10:46:11,758:INFO:machine: x86_64
+2025-02-02 10:46:11,758:INFO:platform: macOS-10.16-x86_64-i386-64bit
+2025-02-02 10:46:11,759:INFO:Memory: svmem(total=17179869184, available=1752129536, percent=89.8, used=2041339904, free=103374848, active=1657761792, inactive=1627443200, wired=383578112)
+2025-02-02 10:46:11,759:INFO:Physical Core: 10
+2025-02-02 10:46:11,759:INFO:Logical Core: 10
+2025-02-02 10:46:11,759:INFO:Checking libraries
+2025-02-02 10:46:11,759:INFO:System:
+2025-02-02 10:46:11,759:INFO:    python: 3.9.13 (main, Aug 25 2022, 18:29:29)  [Clang 12.0.0 ]
+2025-02-02 10:46:11,759:INFO:executable: /Users/mohamednoordeenalaudeen/opt/anaconda3/bin/python
+2025-02-02 10:46:11,759:INFO:   machine: macOS-10.16-x86_64-i386-64bit
+2025-02-02 10:46:11,759:INFO:PyCaret required dependencies:
