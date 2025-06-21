@@ -1,0 +1,13 @@
+pandas
+numpy
+scikit-learn
+nltk
+spacy
+beautifulsoup4
+contractions
+unicodedata2
+requests
+Pillow
+streamlit
+tqdm
+unidecode
