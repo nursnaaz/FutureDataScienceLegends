@@ -22,6 +22,8 @@ The Data Science curriculum assumes the learner has taken basic school math and 
 * [Python for Data Science](https://github.com/nursnaaz/FutureDataScienceLegends/tree/main/01.%20Python)
 * [Introduction to Statistics](https://github.com/nursnaaz/FutureDataScienceLegends/tree/main/02.%20Statistics)
 * [Machine Learning](https://github.com/nursnaaz/FutureDataScienceLegends/tree/main/04.%20Linear%20Regression)
+* [Deep Learning](https://github.com/nursnaaz/FutureDataScienceLegends/tree/main/22.%20Neural%20Network%20Introduction)
+* [Natural Language Processing](https://github.com/nursnaaz/FutureDataScienceLegends/tree/main/26.%20NLP%20Preprocessing)
 
 <br>
 
@@ -54,4 +56,29 @@ The Data Science curriculum assumes the learner has taken basic school math and 
 * [Decision Tree](https://github.com/nursnaaz/FutureDataScienceLegends/tree/main/12.%20Decision%20Tree)
 * [RandomForest](https://github.com/nursnaaz/FutureDataScienceLegends/tree/main/13.%20RandomForest)
 
+* [Deployment using Docker](https://github.com/nursnaaz/FutureDataScienceLegends/tree/main/14.%20ApiWebAppDockerAwsStreamlitDeploy)
+* [Unsupervised Learning](https://github.com/nursnaaz/FutureDataScienceLegends/tree/main/15.%20Unsupervised%20Learning)
+* [PCA](https://github.com/nursnaaz/FutureDataScienceLegends/tree/main/16.%20PCA)
+* [TimeSeries](https://github.com/nursnaaz/FutureDataScienceLegends/tree/main/17.%20TimeSeries)
+* [AutoML - Pycaret](https://github.com/nursnaaz/FutureDataScienceLegends/tree/main/18.%20AutoML)
+* [MLOps - MlFlow and ZenML](https://github.com/nursnaaz/FutureDataScienceLegends/tree/main/19.%20MLOps)
+
+* [Build a Data Science Project Story](https://github.com/nursnaaz/FutureDataScienceLegends/blob/main/20.%20Build_a_Data_Science_Project_Strory.md)
+* [Mock Interview](https://github.com/nursnaaz/FutureDataScienceLegends/blob/main/21.%20Mock%20Interview%20Outcome)
+
+
+# Deep Learning
+* [Neural Network](https://github.com/nursnaaz/FutureDataScienceLegends/tree/main/22.%20Neural%20Network%20Introduction)
+* [Computer Vision](https://github.com/nursnaaz/FutureDataScienceLegends/tree/main/23.%20Computer%20%20Vision)
+* [Object Detection and YOLO](https://github.com/nursnaaz/FutureDataScienceLegends/tree/main/24.%20Computer%20Vision%20-%20Object%20Detection)
+* [RNN and LSTM](https://github.com/nursnaaz/FutureDataScienceLegends/tree/main/25.%20RNN%20-%20LSTM)
+
+
+# Natural Language Processing
+* [NLP Preprocessing](https://github.com/nursnaaz/FutureDataScienceLegends/tree/main/26.%20NLP%20Preprocessing)
+* [Text to Numbers and Cosine Similarity](https://github.com/nursnaaz/FutureDataScienceLegends/tree/main/27.%20Text%20to%20Numbers%20-%20Cosine%20Similarity)
+* [Text Clustering](https://github.com/nursnaaz/FutureDataScienceLegends/tree/main/28.%20Text%20Clustering)
+* [Text Classification](https://github.com/nursnaaz/FutureDataScienceLegends/tree/main/29.%20Text%20Classification)
+* [Topic Modelling](https://github.com/nursnaaz/FutureDataScienceLegends/tree/main/30.%20Topic%20Modelling)
+* [Seq2Seq Model - Machine Translation](https://github.com/nursnaaz/FutureDataScienceLegends/tree/main/31.%20Seq2Seq%20Model%20-%20Machine%20Translation)
   
