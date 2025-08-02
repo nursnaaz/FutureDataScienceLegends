@@ -1,0 +1,1165 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Multi-Head Attention Walkthrough</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .breadcrumb {
+            background: #f8f9fa;
+            padding: 10px 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            font-size: 0.9em;
+        }
+        
+        .breadcrumb a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        
+        .breadcrumb a:hover {
+            text-decoration: underline;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+        
+        h2 {
+            color: #34495e;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+            margin-top: 40px;
+        }
+        
+        h3 {
+            color: #2c3e50;
+            margin-top: 25px;
+        }
+        
+        .student-note {
+            background: #e3f2fd;
+            border-left: 5px solid #2196f3;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            font-style: italic;
+            position: relative;
+        }
+        
+        .student-note::before {
+            content: "💡";
+            position: absolute;
+            top: 10px;
+            left: -15px;
+            background: white;
+            padding: 5px;
+            border-radius: 50%;
+        }
+        
+        .try-yourself {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+            position: relative;
+        }
+        
+        .try-yourself::before {
+            content: "🎯";
+            position: absolute;
+            top: -10px;
+            left: 15px;
+            background: #ffc107;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-weight: bold;
+        }
+        
+        .interactive-button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            margin: 5px;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        
+        .interactive-button:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .sentence {
+            font-size: 1.5em;
+            text-align: center;
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 5px solid #3498db;
+            font-weight: bold;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 0.95em;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .data-table th, .data-table td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: center;
+        }
+        
+        .data-table th {
+            background: #3498db;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .data-table tbody tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+        
+        .data-table tbody tr:hover {
+            background: #e3f2fd;
+            transition: background 0.3s ease;
+        }
+        
+        .matrix-container {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 30px;
+            margin: 30px 0;
+        }
+        
+        .matrix-box {
+            text-align: center;
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid #3498db;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+        
+        .matrix-box:hover {
+            transform: scale(1.02);
+        }
+        
+        .matrix-title {
+            font-size: 1.3em;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #2c3e50;
+        }
+        
+        .matrix {
+            display: grid;
+            grid-template-columns: repeat(4, 70px);
+            gap: 3px;
+            justify-content: center;
+        }
+        
+        .matrix-cell {
+            background: white;
+            padding: 8px;
+            border: 1px solid #bdc3c7;
+            border-radius: 5px;
+            font-weight: bold;
+            font-size: 0.9em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .matrix-cell:hover {
+            background: #3498db;
+            color: white;
+            transform: scale(1.1);
+        }
+        
+        .calculation-step {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 5px solid #e74c3c;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .formula {
+            background: #e8f5e8;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            border-left: 4px solid #27ae60;
+            font-family: 'Courier New', monospace;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .result-highlight {
+            background: #d4edda;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 10px 0;
+            border: 2px solid #28a745;
+            font-weight: bold;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .step-by-step {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 15px 0;
+            border-left: 4px solid #6c757d;
+        }
+        
+        .apple-highlight {
+            background: #ffebee !important;
+            border: 2px solid #e74c3c !important;
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+        
+        .highlight-highest {
+            background: #d4edda !important;
+            border: 2px solid #28a745 !important;
+            font-weight: bold;
+        }
+        
+        @keyframes glow {
+            from { box-shadow: 0 0 5px #e74c3c; }
+            to { box-shadow: 0 0 20px #e74c3c; }
+        }
+        
+        .final-matrix {
+            background: #f3e5f5;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border: 2px solid #9c27b0;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        
+        .quiz-section {
+            background: #e8f5e8;
+            border: 2px solid #27ae60;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .quiz-question {
+            margin: 15px 0;
+            padding: 10px;
+            background: white;
+            border-radius: 5px;
+            box-shadow: 0 1px 5px rgba(0,0,0,0.1);
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 25px;
+            background: #ecf0f1;
+            border-radius: 15px;
+            margin: 20px 0;
+            overflow: hidden;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3498db, #2ecc71);
+            width: 0%;
+            transition: width 0.5s ease;
+            border-radius: 15px;
+            position: relative;
+        }
+        
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, rgba(255,255,255,0.3) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0.3) 75%, transparent 75%, transparent);
+            background-size: 20px 20px;
+            animation: move 1s linear infinite;
+        }
+        
+        @keyframes move {
+            0% { background-position: 0 0; }
+            100% { background-position: 20px 0; }
+        }
+        
+        .interactive-calc {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .input-field {
+            border: 2px solid #3498db;
+            padding: 8px;
+            border-radius: 5px;
+            margin: 5px;
+            width: 80px;
+            transition: all 0.3s ease;
+        }
+        
+        .input-field:focus {
+            outline: none;
+            border-color: #2980b9;
+            box-shadow: 0 0 5px rgba(52, 152, 219, 0.5);
+        }
+        
+        .check-answer {
+            background: #27ae60;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+            transition: all 0.3s ease;
+        }
+        
+        .check-answer:hover {
+            background: #219a52;
+            transform: translateY(-1px);
+        }
+        
+        .hint-box {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            display: none;
+            animation: slideDown 0.3s ease;
+        }
+        
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .back-to-top {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: none;
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+        
+        .back-to-top:hover {
+            background: #2980b9;
+            transform: scale(1.1);
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .matrix-container {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .data-table {
+                font-size: 0.8em;
+            }
+            
+            .data-table th, .data-table td {
+                padding: 8px;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+            
+            .sentence {
+                font-size: 1.2em;
+            }
+        }
+        
+        @media print {
+            body {
+                background: white;
+            }
+            
+            .container {
+                box-shadow: none;
+                background: white;
+            }
+            
+            .interactive-button, .back-to-top {
+                display: none;
+            }
+        }
+    </style>
+    <script>
+        let currentStep = 0;
+        const totalSteps = 12;
+        
+        function updateProgress() {
+            const progressBar = document.querySelector('.progress-fill');
+            const percentage = (currentStep / totalSteps) * 100;
+            progressBar.style.width = percentage + '%';
+            
+            const progressText = document.querySelector('.progress-text');
+            if (progressText) {
+                progressText.textContent = `Step ${currentStep} of ${totalSteps}`;
+            }
+        }
+        
+        function showStep(stepNumber) {
+            currentStep = stepNumber;
+            updateProgress();
+            
+            if (stepNumber >= 3 && stepNumber <= 8) {
+                highlightAppleCalculations();
+            }
+        }
+        
+        function highlightAppleCalculations() {
+            const appleCells = document.querySelectorAll('.apple-highlight');
+            appleCells.forEach(cell => {
+                cell.style.animation = 'pulse 1s ease-in-out 3';
+            });
+        }
+        
+        function toggleHint(hintId) {
+            const hint = document.getElementById(hintId);
+            if (hint.style.display === 'none' || hint.style.display === '') {
+                hint.style.display = 'block';
+            } else {
+                hint.style.display = 'none';
+            }
+        }
+        
+        function checkCalculation(inputId, correctAnswer, feedbackId) {
+            const userAnswer = document.getElementById(inputId).value;
+            const feedback = document.getElementById(feedbackId);
+            
+            if (Math.abs(parseFloat(userAnswer) - correctAnswer) < 0.01) {
+                feedback.innerHTML = "✅ Correct! Well done!";
+                feedback.style.color = "#27ae60";
+                feedback.style.fontWeight = "bold";
+                feedback.style.animation = 'bounce 0.5s ease';
+            } else {
+                feedback.innerHTML = `❌ Try again. Hint: The answer is approximately ${correctAnswer}`;
+                feedback.style.color = "#e74c3c";
+                feedback.style.fontWeight = "bold";
+            }
+        }
+        
+        function scrollToTop() {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        }
+        
+        window.addEventListener('scroll', function() {
+            const backToTopBtn = document.querySelector('.back-to-top');
+            if (window.pageYOffset > 300) {
+                backToTopBtn.style.display = 'block';
+            } else {
+                backToTopBtn.style.display = 'none';
+            }
+        });
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes pulse {
+                    0% { background-color: #ffebee; }
+                    50% { background-color: #ffcdd2; }
+                    100% { background-color: #ffebee; }
+                }
+                
+                @keyframes bounce {
+                    0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+                    40% { transform: translateY(-10px); }
+                    60% { transform: translateY(-5px); }
+                }
+            `;
+            document.head.appendChild(style);
+            updateProgress();
+        });
+    </script>
+</head>
+<body>
+    <button class="back-to-top" onclick="scrollToTop()">↑</button>
+    
+    <div class="container">
+        <div class="breadcrumb">
+            <a href="/">Home</a> > <a href="/tutorials/">Tutorials</a> > Multi-Head Attention Mechanism
+        </div>
+        
+        <h1>🧠 Interactive Multi-Head Attention Walkthrough</h1>
+        
+        <div class="student-note">
+            <p><strong>Dear Student,</strong> You're about to explore the power of multi-head attention in transformers! We'll break down how the word "apple" gains a rich understanding through three specialized attention heads, each focusing on different relationships. Follow the steps, try the exercises, and see the magic of parallel processing!</p>
+        </div>
+        
+        <div class="progress-bar">
+            <div class="progress-fill"></div>
+        </div>
+        <div class="progress-text" style="text-align: center; margin-top: 10px; font-weight: bold;">Step 0 of 12</div>
+        
+        <div class="sentence">
+            "I bought apple to eat"
+        </div>
+
+        <h2>📋 STEP 1: Understanding the Input Data</h2>
+        
+        <div class="student-note">
+            <strong>Your task:</strong> We'll compute how "apple" (highlighted in red) uses three attention heads to understand its context as a fruit, focusing on semantic, syntactic, and purposive relationships.
+        </div>
+        
+        <h3>Word Embeddings (4-dimensional vectors)</h3>
+        <div class="student-note">
+            These vectors represent each word's initial meaning in a 4D space, shared across all attention heads.
+        </div>
+        
+        <table class="data-table">
+            <tr>
+                <th>Position</th>
+                <th>Word</th>
+                <th>Embedding Vector [e₁, e₂, e₃, e₄]</th>
+            </tr>
+            <tr>
+                <td>1</td>
+                <td>I</td>
+                <td>[1.0, 0.2, 0.5, 0.3]</td>
+            </tr>
+            <tr>
+                <td>2</td>
+                <td>bought</td>
+                <td>[0.7, 0.9, 0.4, 0.8]</td>
+            </tr>
+            <tr class="apple-highlight">
+                <td>3</td>
+                <td><strong>apple</strong></td>
+                <td><strong>[0.6, 0.4, 1.0, 0.2] ← YOUR FOCUS WORD</strong></td>
+            </tr>
+            <tr>
+                <td>4</td>
+                <td>to</td>
+                <td>[0.2, 0.5, 0.3, 0.6]</td>
+            </tr>
+            <tr>
+                <td>5</td>
+                <td>eat</td>
+                <td>[0.8, 1.0, 0.3, 0.6]</td>
+            </tr>
+        </table>
+
+        <button class="interactive-button" onclick="showStep(1); alert('Step 1 complete! You understand the input data structure.')">✓ Complete Step 1</button>
+
+        <h2>🧮 STEP 2: Matrix Multiplication Rules</h2>
+        
+        <div class="formula">
+            <strong>How to multiply a 4D vector with a 4×4 matrix:</strong><br>
+            If embedding = [e₁, e₂, e₃, e₄] and Weight = 4×4 matrix<br><br>
+            Result[0] = e₁×W[0,0] + e₂×W[1,0] + e₃×W[2,0] + e₄×W[3,0]<br>
+            Result[1] = e₁×W[0,1] + e₂×W[1,1] + e₃×W[2,1] + e₄×W[3,1]<br>
+            Result[2] = e₁×W[0,2] + e₂×W[1,2] + e₃×W[2,2] + e₄×W[3,2]<br>
+            Result[3] = e₁×W[0,3] + e₂×W[1,3] + e₃×W[2,3] + e₄×W[3,3]
+        </div>
+
+        <div class="try-yourself">
+            <h3>Try It Yourself!</h3>
+            <p>Calculate the first component of apple's Q₁ vector for Head 1:</p>
+            <p>Apple embedding: [0.6, 0.4, 1.0, 0.2]</p>
+            <p>W_Q1[0] = [0.8, 0.1, 0.6, 0.3]</p>
+            <p>Q₁[0] = 0.6×0.8 + 0.4×0.1 + 1.0×0.6 + 0.2×0.3 = ?</p>
+            
+            <input type="number" step="0.001" id="q1-calc" class="input-field" placeholder="Your answer">
+            <button class="check-answer" onclick="checkCalculation('q1-calc', 0.81, 'q1-feedback')">Check</button>
+            <button class="interactive-button" onclick="toggleHint('q1-hint')">Show Hint</button>
+            
+            <div id="q1-feedback" style="margin-top: 10px;"></div>
+            <div id="q1-hint" class="hint-box">
+                <strong>Hint:</strong> 0.6×0.8 = 0.48, 0.4×0.1 = 0.04, 1.0×0.6 = 0.6, 0.2×0.3 = 0.06<br>
+                Sum: 0.48 + 0.04 + 0.6 + 0.06 = 0.81
+            </div>
+        </div>
+
+        <button class="interactive-button" onclick="showStep(2); alert('Step 2 complete! You understand matrix multiplication.')">✓ Complete Step 2</button>
+
+        <h2>🔍 STEP 3: Head 1 - Semantic Relationships (Query Vectors)</h2>
+        
+        <div class="student-note">
+            Head 1 focuses on semantic relationships, transforming embeddings into queries to find meaning-based connections.
+        </div>
+        
+        <h3>Weight Matrices for Head 1 (4×4)</h3>
+        <div class="matrix-container">
+            <div class="matrix-box">
+                <div class="matrix-title">W<sub>Q1</sub> (Query Matrix)</div>
+                <div class="student-note">Transforms words into semantic "search queries"</div>
+                <div class="matrix">
+                    <div class="matrix-cell">0.8</div>
+                    <div class="matrix-cell">0.2</div>
+                    <div class="matrix-cell">0.1</div>
+                    <div class="matrix-cell">0.3</div>
+                    <div class="matrix-cell">0.1</div>
+                    <div class="matrix-cell">0.9</div>
+                    <div class="matrix-cell">0.4</div>
+                    <div class="matrix-cell">0.2</div>
+                    <div class="matrix-cell">0.6</div>
+                    <div class="matrix-cell">0.4</div>
+                    <div class="matrix-cell">0.7</div>
+                    <div class="matrix-cell">0.5</div>
+                    <div class="matrix-cell">0.3</div>
+                    <div class="matrix-cell">0.7</div>
+                    <div class="matrix-cell">0.2</div>
+                    <div class="matrix-cell">0.8</div>
+                </div>
+            </div>
+            
+            <div class="matrix-box">
+                <div class="matrix-title">W<sub>K1</sub> (Key Matrix)</div>
+                <div class="student-note">Transforms words into semantic "information advertisements"</div>
+                <div class="matrix">
+                    <div class="matrix-cell">0.7</div>
+                    <div class="matrix-cell">0.3</div>
+                    <div class="matrix-cell">0.2</div>
+                    <div class="matrix-cell">0.4</div>
+                    <div class="matrix-cell">0.4</div>
+                    <div class="matrix-cell">0.6</div>
+                    <div class="matrix-cell">0.5</div>
+                    <div class="matrix-cell">0.3</div>
+                    <div class="matrix-cell">0.9</div>
+                    <div class="matrix-cell">0.1</div>
+                    <div class="matrix-cell">0.8</div>
+                    <div class="matrix-cell">0.2</div>
+                    <div class="matrix-cell">0.2</div>
+                    <div class="matrix-cell">0.8</div>
+                    <div class="matrix-cell">0.3</div>
+                    <div class="matrix-cell">0.7</div>
+                </div>
+            </div>
+            
+            <div class="matrix-box">
+                <div class="matrix-title">W<sub>V1</sub> (Value Matrix)</div>
+                <div class="student-note">Transforms words into semantic "information content"</div>
+                <div class="matrix">
+                    <div class="matrix-cell">0.5</div>
+                    <div class="matrix-cell">0.5</div>
+                    <div class="matrix-cell">0.3</div>
+                    <div class="matrix-cell">0.2</div>
+                    <div class="matrix-cell">0.8</div>
+                    <div class="matrix-cell">0.2</div>
+                    <div class="matrix-cell">0.6</div>
+                    <div class="matrix-cell">0.4</div>
+                    <div class="matrix-cell">0.3</div>
+                    <div class="matrix-cell">0.7</div>
+                    <div class="matrix-cell">0.5</div>
+                    <div class="matrix-cell">0.1</div>
+                    <div class="matrix-cell">0.6</div>
+                    <div class="matrix-cell">0.4</div>
+                    <div class="matrix-cell">0.2</div>
+                    <div class="matrix-cell">0.8</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="calculation-step apple-highlight">
+            <h3>Apple's Q₁ Vector Calculation</h3>
+            <div class="step-by-step">
+                <strong>Apple embedding [0.6, 0.4, 1.0, 0.2] × W_Q1:</strong><br><br>
+                Q₁[0] = 0.6×0.8 + 0.4×0.1 + 1.0×0.6 + 0.2×0.3 = 0.48 + 0.04 + 0.6 + 0.06 = <strong>0.81</strong><br>
+                Q₁[1] = 0.6×0.2 + 0.4×0.9 + 1.0×0.4 + 0.2×0.7 = 0.12 + 0.36 + 0.4 + 0.14 = <strong>0.67</strong><br>
+                Q₁[2] = 0.6×0.1 + 0.4×0.4 + 1.0×0.7 + 0.2×0.2 = 0.06 + 0.16 + 0.7 + 0.04 = <strong>0.89</strong><br>
+                Q₁[3] = 0.6×0.3 + 0.4×0.2 + 1.0×0.5 + 0.2×0.8 = 0.18 + 0.08 + 0.5 + 0.16 = <strong>0.73</strong><br><br>
+                <strong>Apple's Query (Head 1): [0.81, 0.67, 0.89, 0.73]</strong>
+            </div>
+        </div>
+
+        <div class="result-highlight">
+            <h3>✅ All Q₁ Vectors Complete</h3>
+            <table class="data-table">
+                <tr><th>Word</th><th>Q₁ Vector (4D)</th><th>Meaning</th></tr>
+                <tr><td>I</td><td>[0.95, 0.52, 0.75, 0.62]</td><td>"Who am I acting upon?"</td></tr>
+                <tr><td>bought</td><td>[0.82, 0.95, 0.69, 0.98]</td><td>"What was purchased?"</td></tr>
+                <tr class="apple-highlight"><td><strong>apple</strong></td><td><strong>[0.81, 0.67, 0.89, 0.73]</strong></td><td><strong>"What semantic context defines me?"</strong></td></tr>
+                <tr><td>to</td><td>[0.45, 0.58, 0.47, 0.61]</td><td>"What's my purpose?"</td></tr>
+                <tr><td>eat</td><td>[0.87, 0.92, 0.66, 0.94]</td><td>"What am I the action for?"</td></tr>
+            </table>
+        </div>
+
+        <button class="interactive-button" onclick="showStep(3); alert('Step 3 complete! You calculated Query vectors for Head 1.')">✓ Complete Step 3</button>
+
+        <h2>🔑 STEP 4: Head 1 - Semantic Relationships (Key Vectors)</h2>
+        
+        <div class="student-note">
+            Key vectors in Head 1 advertise what semantic information each word can provide.
+        </div>
+
+        <div class="interactive-calc">
+            <h3>Your Turn: Calculate Apple's K₁ Vector!</h3>
+            <p>Apple embedding [0.6, 0.4, 1.0, 0.2] × W_K1</p>
+            <p>K₁[0] = 0.6×0.7 + 0.4×0.4 + 1.0×0.9 + 0.2×0.2 = ?</p>
+            
+            <input type="number" step="0.001" id="k1-calc" class="input-field" placeholder="K₁[0]">
+            <button class="check-answer" onclick="checkCalculation('k1-calc', 1.61, 'k1-feedback')">Check K₁[0]</button>
+            
+            <div id="k1-feedback" style="margin-top: 10px;"></div>
+        </div>
+
+        <div class="result-highlight">
+            <h3>✅ All K₁ Vectors Complete</h3>
+            <table class="data-table">
+                <tr><th>Word</th><th>K₁ Vector (4D)</th><th>Advertisement</th></tr>
+                <tr><td>I</td><td>[1.22, 0.76, 0.81, 0.68]</td><td>"I provide agent context!"</td></tr>
+                <tr><td>bought</td><td>[1.15, 0.99, 0.72, 0.93]</td><td>"I provide action context!"</td></tr>
+                <tr class="apple-highlight"><td><strong>apple</strong></td><td><strong>[1.61, 0.83, 0.94, 0.78]</strong></td><td><strong>"I provide object context!"</strong></td></tr>
+                <tr><td>to</td><td>[0.62, 0.67, 0.49, 0.65]</td><td>"I provide purpose context!"</td></tr>
+                <tr><td>eat</td><td>[1.13, 0.96, 0.69, 0.89]</td><td>"I provide FOOD context!"</td></tr>
+            </table>
+        </div>
+
+        <button class="interactive-button" onclick="showStep(4); alert('Step 4 complete! You calculated Key vectors for Head 1.')">✓ Complete Step 4</button>
+
+        <h2>💎 STEP 5: Head 1 - Semantic Relationships (Value Vectors)</h2>
+        
+        <div class="student-note">
+            Value vectors in Head 1 carry the semantic information each word contributes.
+        </div>
+
+        <div class="result-highlight">
+            <h3>✅ All V₁ Vectors Complete</h3>
+            <table class="data-table">
+                <tr><th>Word</th><th>V₁ Vector (4D)</th><th>Information Content</th></tr>
+                <tr><td>I</td><td>[0.72, 0.64, 0.55, 0.47]</td><td>Agent information</td></tr>
+                <tr><td>bought</td><td>[0.61, 0.78, 0.49, 0.66]</td><td>Purchase information</td></tr>
+                <tr class="apple-highlight"><td><strong>apple</strong></td><td><strong>[0.58, 0.62, 0.52, 0.43]</strong></td><td><strong>Object information</strong></td></tr>
+                <tr><td>to</td><td>[0.44, 0.51, 0.38, 0.49]</td><td>Purpose information</td></tr>
+                <tr><td>eat</td><td>[0.59, 0.75, 0.46, 0.62]</td><td>CONSUMPTION information</td></tr>
+            </table>
+        </div>
+
+        <button class="interactive-button" onclick="showStep(5); alert('Step 5 complete! You calculated Value vectors for Head 1.')">✓ Complete Step 5</button>
+
+        <h2>🎯 STEP 6: Head 1 - Calculate Attention Scores</h2>
+        
+        <div class="student-note">
+            We compute dot products between each word's query vector and all key vectors to find semantic relationships. The table below shows the attention scores for all query-key pairs in Head 1, with the highest score for each query highlighted.
+        </div>
+        
+        <div class="formula">
+            <strong>Dot Product Formula (4D):</strong><br>
+            Q₁·K₁ = Q₁[0]×K₁[0] + Q₁[1]×K₁[1] + Q₁[2]×K₁[2] + Q₁[3]×K₁[3]
+        </div>
+
+        <div class="calculation-step">
+            <h3>Attention Scores Matrix (Head 1)</h3>
+            <table class="data-table">
+                <tr>
+                    <th>Query \ Key</th>
+                    <th>I [1.22, 0.76, 0.81, 0.68]</th>
+                    <th>bought [1.15, 0.99, 0.72, 0.93]</th>
+                    <th>apple [1.61, 0.83, 0.94, 0.78]</th>
+                    <th>to [0.62, 0.67, 0.49, 0.65]</th>
+                    <th>eat [1.13, 0.96, 0.69, 0.89]</th>
+                </tr>
+                <tr>
+                    <td>I [0.95, 0.52, 0.75, 0.62]</td>
+                    <td class="highlight-highest">2.42</td>
+                    <td>2.40</td>
+                    <td>2.37</td>
+                    <td>1.45</td>
+                    <td>2.36</td>
+                </tr>
+                <tr>
+                    <td>bought [0.82, 0.95, 0.69, 0.98]</td>
+                    <td>2.81</td>
+                    <td class="highlight-highest">3.01</td>
+                    <td>2.77</td>
+                    <td>1.76</td>
+                    <td>2.85</td>
+                </tr>
+                <tr class="apple-highlight">
+                    <td><strong>apple [0.81, 0.67, 0.89, 0.73]</strong></td>
+                    <td>2.71</td>
+                    <td>2.92</td>
+                    <td class="highlight-highest">3.27</td>
+                    <td>1.86</td>
+                    <td>2.82</td>
+                </tr>
+                <tr>
+                    <td>to [0.45, 0.58, 0.47, 0.61]</td>
+                    <td>1.57</td>
+                    <td>1.74</td>
+                    <td>1.59</td>
+                    <td class="highlight-highest">1.76</td>
+                    <td>1.71</td>
+                </tr>
+                <tr>
+                    <td>eat [0.87, 0.92, 0.66, 0.94]</td>
+                    <td>2.76</td>
+                    <td>2.96</td>
+                    <td>2.72</td>
+                    <td>1.74</td>
+                    <td class="highlight-highest">2.87</td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="calculation-step apple-highlight">
+            <h3>Apple's Attention Scores (Head 1)</h3>
+            <div class="step-by-step">
+                <strong>Apple Query: [0.81, 0.67, 0.89, 0.73]</strong><br><br>
+                
+                <strong>Apple → I:</strong><br>
+                [0.81, 0.67, 0.89, 0.73] · [1.22, 0.76, 0.81, 0.68] = 0.81×1.22 + 0.67×0.76 + 0.89×0.81 + 0.73×0.68<br>
+                = 0.988 + 0.509 + 0.721 + 0.496 = <strong>2.714</strong><br><br>
+                
+                <strong>Apple → bought:</strong><br>
+                = 0.81×1.15 + 0.67×0.99 + 0.89×0.72 + 0.73×0.93 = 0.932 + 0.663 + 0.641 + 0.679 = <strong>2.915</strong><br><br>
+                
+                <strong>Apple → apple:</strong><br>
+                = 0.81×1.61 + 0.67×0.83 + 0.89×0.94 + 0.73×0.78 = 1.304 + 0.556 + 0.837 + 0.569 = <strong>3.266</strong> ⭐ HIGHEST!<br><br>
+                
+                <strong>Apple → to:</strong><br>
+                = 0.81×0.62 + 0.67×0.67 + 0.89×0.49 + 0.73×0.65 = 0.502 + 0.449 + 0.436 + 0.475 = <strong>1.862</strong><br><br>
+                
+                <strong>Apple → eat:</strong><br>
+                = 0.81×1.13 + 0.67×0.96 + 0.89×0.69 + 0.73×0.89 = 0.915 + 0.643 + 0.614 + 0.650 = <strong>2.822</strong><br>
+            </div>
+        </div>
+
+        <button class="interactive-button" onclick="showStep(6); alert('Step 6 complete! You calculated attention scores for Head 1.')">✓ Complete Step 6</button>
+
+        <h2>📐 STEP 7: Head 1 - Scale and Softmax</h2>
+        
+        <div class="student-note">
+            We scale attention scores by √4 = 2 and apply softmax to get attention weights that sum to 1.0 for each query word. The table below shows the attention weights for all query-key pairs in Head 1, with the highest weight for each query highlighted.
+        </div>
+        
+        <div class="formula">
+            <strong>Scaling and Softmax:</strong><br>
+            Scaled Score = Raw Score ÷ √4 = Raw Score ÷ 2<br>
+            Softmax: e^(Scaled Score) ÷ Sum(e^(Scaled Scores))
+        </div>
+
+        <div class="calculation-step">
+            <h3>Attention Weights Matrix (Head 1)</h3>
+            <table class="data-table">
+                <tr>
+                    <th>Query \ Key</th>
+                    <th>I</th>
+                    <th>bought</th>
+                    <th>apple</th>
+                    <th>to</th>
+                    <th>eat</th>
+                </tr>
+                <tr>
+                    <td>I</td>
+                    <td class="highlight-highest">0.208</td>
+                    <td>0.204</td>
+                    <td>0.199</td>
+                    <td>0.080</td>
+                    <td>0.197</td>
+                </tr>
+                <tr>
+                    <td>bought</td>
+                    <td>0.202</td>
+                    <td class="highlight-highest">0.245</td>
+                    <td>0.194</td>
+                    <td>0.070</td>
+                    <td>0.209</td>
+                </tr>
+                <tr class="apple-highlight">
+                    <td><strong>apple</strong></td>
+                    <td>0.151</td>
+                    <td>0.184</td>
+                    <td class="highlight-highest">0.162</td>
+                    <td>0.121</td>
+                    <td>0.382</td>
+                </tr>
+                <tr>
+                    <td>to</td>
+                    <td>0.170</td>
+                    <td>0.202</td>
+                    <td>0.175</td>
+                    <td class="highlight-highest">0.206</td>
+                    <td>0.196</td>
+                </tr>
+                <tr>
+                    <td>eat</td>
+                    <td>0.201</td>
+                    <td>0.243</td>
+                    <td>0.191</td>
+                    <td>0.072</td>
+                    <td class="highlight-highest">0.223</td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="interactive-calc">
+            <h3>Practice Softmax: Head 1, Apple → eat</h3>
+            <p>Raw score: 2.822, Scaled: 2.822 ÷ 2 = 1.411</p>
+            <p>Exponentials: [e^1.357, e^1.458, e^1.633, e^0.931, e^1.411] = [3.885, 4.301, 5.121, 2.537, 4.101]</p>
+            <p>Sum = 19.945, Softmax = 4.101 ÷ 19.945 = ?</p>
+            
+            <input type="number" step="0.001" id="softmax1-calc" class="input-field" placeholder="Probability">
+            <button class="check-answer" onclick="checkCalculation('softmax1-calc', 0.206, 'softmax1-feedback')">Check</button>
+            <div id="softmax1-feedback" style="margin-top: 10px;"></div>
+        </div>
+
+        <div class="result-highlight apple-highlight">
+            <h3>Apple's Attention Weights (Head 1)</h3>
+            <table class="data-table">
+                <tr><th>Word</th><th>Weight</th></tr>
+                <tr><td>I</td><td>0.151</td></tr>
+                <tr><td>bought</td><td>0.184</td></tr>
+                <tr><td>apple</td><td><strong>0.162</strong></td></tr>
+                <tr><td>to</td><td>0.121</td></tr>
+                <tr><td>eat</td><td><strong>0.382</strong> ⭐</td></tr>
+            </table>
+        </div>
+
+        <button class="interactive-button" onclick="showStep(7); alert('Step 7 complete! You applied softmax for Head 1.')">✓ Complete Step 7</button>
+
+        <h2>📍 STEP 8: Head 1 - Output Vector</h2>
+        
+        <div class="student-note">
+            We compute the weighted sum of value vectors using attention weights to get Head 1's output for "apple".
+        </div>
+        
+        <div class="calculation-step apple-highlight">
+            <h3>Apple's Output (Head 1)</h3>
+            <div class="step-by-step">
+                <strong>Weighted Value Vectors:</strong><br>
+                0.151 × [0.72, 0.64, 0.55, 0.47] = [0.109, 0.097, 0.083, 0.071]<br>
+                0.184 × [0.61, 0.78, 0.49, 0.66] = [0.112, 0.143, 0.090, 0.121]<br>
+                0.162 × [0.58, 0.62, 0.52, 0.43] = [0.094, 0.100, 0.084, 0.070]<br>
+                0.121 × [0.44, 0.51, 0.38, 0.49] = [0.053, 0.062, 0.046, 0.059]<br>
+                0.382 × [0.59, 0.75, 0.46, 0.62] = [0.225, 0.287, 0.176, 0.237]<br><br>
+                
+                <strong>Sum:</strong><br>
+                Component 1: 0.109 + 0.112 + 0.094 + 0.053 + 0.225 = <strong>0.58</strong><br>
+                Component 2: 0.097 + 0.143 + 0.100 + 0.062 + 0.287 = <strong>0.46</strong><br>
+                Component 3: 0.083 + 0.090 + 0.084 + 0.046 + 0.176 = <strong>0.37</strong><br>
+                Component 4: 0.071 + 0.121 + 0.070 + 0.059 + 0.237 = <strong>0.46</strong><br><br>
+                <strong>Output: [0.58, 0.46, 0.37, 0.46]</strong>
+            </div>
+        </div>
+
+        <button class="interactive-button" onclick="showStep(8); alert('Step 8 complete! You calculated Head 1 output.')">✓ Complete Step 8</button>
+
+        <h2>📍 STEP 9: Heads 2 & 3 - Positional/Syntactic and Contextual Purpose</h2>
+        
+        <div class="student-note">
+            Heads 2 and 3 follow the same process but focus on syntactic structure and contextual purpose, respectively.
+        </div>
+        
+        <div class="result-highlight">
+            <h3>Head 2: Positional/Syntactic Output</h3>
+            <table class="data-table">
+                <tr><th>Word</th><th>Weight</th><th>Output Vector</th></tr>
+                <tr><td>I</td><td>0.269</td><td rowspan="5">[0.61, 0.42, 0.47, 0.32]</td></tr>
+                <tr><td>bought</td><td>0.315</td></tr>
+                <tr class="apple-highlight"><td><strong>apple</strong></td><td><strong>0.221</strong></td></tr>
+                <tr><td>to</td><td>0.147</td></tr>
+                <tr><td>eat</td><td>0.048</td></tr>
+            </table>
+        </div>
+
+        <div class="result-highlight">
+            <h3>Head 3: Contextual Purpose Output</h3>
+            <table class="data-table">
+                <tr><th>Word</th><th>Weight</th><th>Output Vector</th></tr>
+                <tr><td>I</td><td>0.156</td><td rowspan="5">[0.39, 0.61, 0.46, 0.38]</td></tr>
+                <tr><td>bought</td><td>0.137</td></tr>
+                <tr class="apple-highlight"><td><strong>apple</strong></td><td><strong>0.166</strong></td></tr>
+                <tr><td>to</td><td>0.235</td></tr>
+                <tr><td>eat</td><td>0.306</td></tr>
+            </table>
+        </div>
+
+        <button class="interactive-button" onclick="showStep(9); alert('Step 9 complete! You reviewed Heads 2 and 3 outputs.')">✓ Complete Step 9</button>
+
+        <h2>🔗 STEP 10: Concatenate Head Outputs</h2>
+        
+        <div class="student-note">
+            We combine the outputs from all three heads into a single 12D vector.
+        </div>
+        
+        <div class="calculation-step">
+            <h3>Concatenation</h3>
+            <div class="step-by-step">
+                Concat([0.58, 0.46, 0.37, 0.46], [0.61, 0.42, 0.47, 0.32], [0.39, 0.61, 0.46, 0.38])<br>
+                = <strong>[0.58, 0.46, 0.37, 0.46, 0.61, 0.42, 0.47, 0.32, 0.39, 0.61, 0.46, 0.38]</strong>
+            </div>
+        </div>
+
+        <button class="interactive-button" onclick="showStep(10); alert('Step 10 complete! You concatenated head outputs.')">✓ Complete Step 10</button>
+
+        <h2>🔧 STEP 11: Linear Transformation</h2>
+        
+        <div class="student-note">
+            We apply a linear transformation to the concatenated vector to produce the final 4D output.
+        </div>
+        
+        <div class="formula">
+            <strong>Linear Transformation:</strong><br>
+            Final = Concatenated Vector × W_O (12×4 matrix)
+        </div>
+
+        <div class="calculation-step">
+            <h3>Final Output Calculation</h3>
+            <div class="step-by-step">
+                <strong>W_O (Output Weight Matrix):</strong><br>
+                <div class="matrix" style="grid-template-columns: repeat(4, 70px);">
+                    <div class="matrix-cell">0.5</div><div class="matrix-cell">0.3</div><div class="matrix-cell">0.2</div><div class="matrix-cell">0.4</div>
+                    <div class="matrix-cell">0.2</div><div class="matrix-cell">0.8</div><div class="matrix-cell">0.1</div><div class="matrix-cell">0.6</div>
+                    <div class="matrix-cell">0.7</div><div class="matrix-cell">0.1</div><div class="matrix-cell">0.9</div><div class="matrix-cell">0.3</div>
+                    <div class="matrix-cell">0.4</div><div class="matrix-cell">0.6</div><div class="matrix-cell">0.2</div><div class="matrix-cell">0.8</div>
+                    <div class="matrix-cell">0.9</div><div class="matrix-cell">0.2</div><div class="matrix-cell">0.3</div><div class="matrix-cell">0.7</div>
+                    <div class="matrix-cell">0.3</div><div class="matrix-cell">0.7</div><div class="matrix-cell">0.4</div><div class="matrix-cell">0.5</div>
+                    <div class="matrix-cell">0.6</div><div class="matrix-cell">0.4</div><div class="matrix-cell">0.8</div><div class="matrix-cell">0.2</div>
+                    <div class="matrix-cell">0.2</div><div class="matrix-cell">0.9</div><div class="matrix-cell">0.3</div><div class="matrix-cell">0.6</div>
+                    <div class="matrix-cell">0.8</div><div class="matrix-cell">0.3</div><div class="matrix-cell">0.5</div><div class="matrix-cell">0.4</div>
+                    <div class="matrix-cell">0.1</div><div class="matrix-cell">0.6</div><div class="matrix-cell">0.2</div><div class="matrix-cell">0.9</div>
+                    <div class="matrix-cell">0.7</div><div class="matrix-cell">0.4</div><div class="matrix-cell">0.8</div><div class="matrix-cell">0.3</div>
+                    <div class="matrix-cell">0.5</div><div class="matrix-cell">0.2</div><div class="matrix-cell">0.6</div><div class="matrix-cell">0.7</div>
+                </div><br>
+                
+                <strong>Calculation:</strong><br>
+                Component 1: 0.58×0.5 + 0.46×0.2 + 0.37×0.7 + 0.46×0.4 + 0.61×0.9 + 0.42×0.3 + 0.47×0.6 + 0.32×0.2 + 0.39×0.8 + 0.61×0.1 + 0.46×0.7 + 0.38×0.5 = <strong>2.04</strong><br>
+                Component 2: 0.58×0.3 + 0.46×0.8 + 0.37×0.1 + 0.46×0.6 + 0.61×0.2 + 0.42×0.7 + 0.47×0.4 + 0.32×0.9 + 0.39×0.3 + 0.61×0.6 + 0.46×0.4 + 0.38×0.2 = <strong>1.93</strong><br>
+                Component 3: 0.58×0.2 + 0.46×0.1 + 0.37×0.9 + 0.46×0.2 + 0.61×0.3 + 0.42×0.4 + 0.47×0.8 + 0.32×0.3 + 0.39×0.5 + 0.61×0.2 + 0.46×0.8 + 0.38×0.6 = <strong>1.85</strong><br>
+                Component 4: 0.58×0.4 + 0.46×0.6 + 0.37×0.3 + 0.46×0.8 + 0.61×0.7 + 0.42×0.5 + 0.47×0.2 + 0.32×0.6 + 0.39×0.4 + 0.61×0.9 + 0.46×0.3 + 0.38×0.7 = <strong>2.32</strong><br><br>
+                <strong>Final Output: [2.04, 1.93, 1.85, 2.32]</strong>
+            </div>
+        </div>
+
+        <button class="interactive-button" onclick="showStep(11); alert('Step 11 complete! You applied the linear transformation.')">✓ Complete Step 11</button>
+
+        <h2>🏆 STEP 12: Understanding Multi-Head Attention</h2>
+        
+        <div class="final-matrix">
+            <h3>🎉 Congratulations! You've Completed the Multi-Head Attention Calculation</h3>
+            <div style="text-align: center; font-size: 1.5em; margin: 20px 0; background: #d4edda; padding: 20px; border-radius: 10px;">
+                <strong>Apple's Final 4D Meaning: [2.04, 1.93, 1.85, 2.32]</strong>
+            </div>
+            
+            <h3>🔍 What You Discovered:</h3>
+            <div class="step-by-step">
+                <p><strong>Head 1 (Semantic):</strong> Focused on "eat" (0.382), capturing food consumption semantics.</p>
+                <p><strong>Head 2 (Syntactic):</strong> Focused on "bought" (0.315), capturing subject-verb-object structure.</p>
+                <p><strong>Head 3 (Purpose):</strong> Focused on "to" (0.235) and "eat" (0.306), capturing purpose/intention.</p>
+                <p><strong>Final Output:</strong> Combines all perspectives for a rich, multi-faceted understanding.</p>
+            </div>
+        </div>
+
+        <div class="quiz-section">
+            <h3>🧠 Quick Check: Why Multi-Head Attention?</h3>
+            <div class="quiz-question">
+                <p><strong>Question:</strong> Why does multi-head attention outperform single-head attention?</p>
+                <button class="interactive-button" onclick="alert('Correct! Multiple heads specialize in different aspects.')">A) Each head focuses on different relationships</button>
+                <button class="interactive-button" onclick="alert('Not quite. Multiple heads allow parallel specialization.')">B) It processes data faster</button>
+                <button class="interactive-button" onclick="alert('Incorrect. Multi-head attention creates richer representations.')">C) It reduces model size</button>
+            </div>
+        </div>
+
+        <button class="interactive-button" onclick="showStep(12); alert('Step 12 complete! You mastered multi-head attention!')">✓ Complete Step 12</button>
+    </div>
+</body>
+</html>

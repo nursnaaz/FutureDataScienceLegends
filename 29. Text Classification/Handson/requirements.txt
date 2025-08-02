@@ -1,0 +1,10 @@
+pandas
+numpy
+scikit-learn
+streamlit
+nltk
+joblib
+
+gensim
+textblob  #addfor sentiment
+fasttext  #addfor fasttext embeddings

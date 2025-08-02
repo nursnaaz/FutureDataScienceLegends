@@ -1,0 +1,813 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Head Attention Mechanism</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px; /* Reduced max-width to prevent overflow */
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            box-sizing: border-box; /* Ensure padding doesn't cause overflow */
+        }
+        
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.2em; /* Slightly smaller for better fit */
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        h2 {
+            color: #34495e;
+            border-bottom: 3px solid #9b59b6;
+            padding-bottom: 10px;
+            margin-top: 30px;
+        }
+        
+        h3 {
+            color: #8e44ad;
+            margin-top: 25px;
+        }
+        
+        .sentence {
+            font-size: 1.2em; /* Slightly smaller */
+            text-align: center;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 5px solid #9b59b6;
+        }
+        
+        .tokens {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        
+        .token {
+            background: #ecf0f1;
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 2px solid #bdc3c7;
+            font-weight: bold;
+        }
+        
+        .token.highlight {
+            background: #9b59b6;
+            color: white;
+            border-color: #8e44ad;
+        }
+        
+        .heads-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* Adjusted for better fit */
+            gap: 20px;
+            margin: 20px 0;
+        }
+        
+        .head {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px; /* Reduced padding */
+            border: 3px solid;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            box-sizing: border-box;
+        }
+        
+        .head-1 {
+            border-color: #e74c3c;
+            background: linear-gradient(135deg, #ffebee 0%, #fce4ec 100%);
+        }
+        
+        .head-2 {
+            border-color: #3498db;
+            background: linear-gradient(135deg, #e3f2fd 0%, #e1f5fe 100%);
+        }
+        
+        .head-3 {
+            border-color: #27ae60;
+            background: linear-gradient(135deg, #e8f5e8 0%, #f1f8e9 100%);
+        }
+        
+        .head-title {
+            font-size: 1.1em; /* Slightly smaller */
+            font-weight: bold;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .head-1 .head-title {
+            color: #c0392b;
+        }
+        
+        .head-2 .head-title {
+            color: #2980b9;
+        }
+        
+        .head-3 .head-title {
+            color: #229954;
+        }
+        
+        .matrix {
+            display: grid;
+            gap: 2px; /* Reduced gap */
+            margin: 10px auto; /* Centered */
+            justify-content: center;
+            max-width: 100%; /* Prevent overflow */
+        }
+        
+        .matrix-4x4 {
+            grid-template-columns: repeat(4, 35px); /* Smaller cell size */
+        }
+        
+        .matrix-cell {
+            background: white;
+            padding: 5px;
+            text-align: center;
+            border-radius: 3px;
+            border: 1px solid #ddd;
+            font-size: 0.75em; /* Smaller font */
+        }
+        
+        .bar-chart {
+            display: flex;
+            align-items: flex-end; /* Ensure horizontal alignment */
+            justify-content: center;
+            gap: 6px;
+            height: 100px; /* Reduced height */
+            margin: 15px 0;
+            flex-wrap: nowrap; /* Prevent wrapping */
+            overflow-x: auto; /* Allow scrolling if needed */
+        }
+        
+        .bar {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 40px; /* Reduced width */
+        }
+        
+        .bar-fill {
+            width: 20px; /* Smaller bars */
+            border-radius: 3px 3px 0 0;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        
+        .head-1 .bar-fill {
+            background: linear-gradient(45deg, #e74c3c, #c0392b);
+        }
+        
+        .head-2 .bar-fill {
+            background: linear-gradient(45deg, #3498db, #2980b9);
+        }
+        
+        .head-3 .bar-fill {
+            background: linear-gradient(45deg, #27ae60, #229954);
+        }
+        
+        .bar-label {
+            margin-top: 6px;
+            font-weight: bold;
+            font-size: 0.75em;
+        }
+        
+        .bar-value {
+            font-size: 0.65em;
+            color: #666;
+            margin-top: 3px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+            font-size: 0.85em;
+        }
+        
+        th, td {
+            border: 1px solid #ddd;
+            padding: 5px;
+            text-align: center;
+        }
+        
+        th {
+            background: #9b59b6;
+            color: white;
+            font-size: 0.75em;
+        }
+        
+        .computation {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border-left: 3px solid #9b59b6;
+            font-size: 0.85em;
+        }
+        
+        .concatenation {
+            background: linear-gradient(135deg, #fff3e0 0%, #fce4ec 50%, #e8f5e8 100%);
+            padding: 15px;
+            border-radius: 15px;
+            margin: 20px 0;
+            border: 3px solid #9b59b6;
+        }
+        
+        .final-result {
+            background: #fff3cd;
+            padding: 20px;
+            border-radius: 15px;
+            border: 3px solid #ffc107;
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .explanation {
+            background: #d4edda;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #28a745;
+            margin: 20px 0;
+            line-height: 1.6;
+        }
+        
+        .comparison-table {
+            margin: 20px 0;
+        }
+        
+        .comparison-table th {
+            background: #8e44ad;
+        }
+        
+        .head-output {
+            background: white;
+            padding: 10px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border: 2px solid #ddd;
+        }
+        
+        .architecture-diagram {
+            background: white;
+            padding: 15px;
+            border-radius: 15px;
+            margin: 20px 0;
+            text-align: center;
+            border: 2px solid #9b59b6;
+        }
+        
+        .flow-step {
+            display: inline-block;
+            background: #f8f9fa;
+            padding: 8px 12px;
+            margin: 5px;
+            border-radius: 8px;
+            border: 2px solid #9b59b6;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+        
+        .arrow {
+            font-size: 1.3em;
+            color: #9b59b6;
+            margin: 0 8px;
+        }
+
+        /* Ensure matrices don't overlap */
+        .matrix-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            max-width: 100%;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧠 Multi-Head Attention Mechanism</h1>
+        
+        <div class="sentence">
+            "I bought apple to eat"
+        </div>
+        
+        <div class="architecture-diagram">
+            <h2>🏗️ Multi-Head Attention Architecture</h2>
+            <div style="margin: 20px 0;">
+                <span class="flow-step">Input Embeddings</span>
+                <span class="arrow">→</span>
+                <span class="flow-step">Head 1 (Q₁,K₁,V₁)</span>
+                <span class="arrow">→</span>
+                <span class="flow-step">Attention₁</span>
+                <br><br>
+                <span class="flow-step">Same Input</span>
+                <span class="arrow">→</span>
+                <span class="flow-step">Head 2 (Q₂,K₂,V₂)</span>
+                <span class="arrow">→</span>
+                <span class="flow-step">Attention₂</span>
+                <br><br>
+                <span class="flow-step">Same Input</span>
+                <span class="arrow">→</span>
+                <span class="flow-step">Head 3 (Q₃,K₃,V₃)</span>
+                <span class="arrow">→</span>
+                <span class="flow-step">Attention₃</span>
+                <br><br>
+                <span class="flow-step">Concatenate</span>
+                <span class="arrow">→</span>
+                <span class="flow-step">Linear Transform</span>
+                <span class="arrow">→</span>
+                <span class="flow-step">Final Output</span>
+            </div>
+        </div>
+        
+        <div class="tokens">
+            <div class="token">I</div>
+            <div class="token">bought</div>
+            <div class="token highlight">apple</div>
+            <div class="token">to</div>
+            <div class="token">eat</div>
+        </div>
+        
+        <div class="explanation">
+            <strong>Focus:</strong> Computing multi-head attention for "apple" using 3 different attention heads, each learning different types of relationships.
+        </div>
+        
+        <h2>Step 1: Same Input Embeddings for All Heads</h2>
+        <table>
+            <tr>
+                <th>Word</th>
+                <th>Embedding Vector (4D)</th>
+            </tr>
+            <tr><td>I</td><td>[1.0, 0.2, 0.5, 0.3]</td></tr>
+            <tr><td>bought</td><td>[0.7, 0.9, 0.4, 0.8]</td></tr>
+            <tr style="background: #f3e5f5;"><td><strong>apple</strong></td><td><strong>[0.6, 0.4, 1.0, 0.2]</strong></td></tr>
+            <tr><td>to</td><td>[0.2, 0.5, 0.3, 0.6]</td></tr>
+            <tr><td>eat</td><td>[0.8, 1.0, 0.3, 0.6]</td></tr>
+        </table>
+        
+        <h2>Step 2: Three Different Attention Heads</h2>
+        
+        <div class="heads-container">
+            <!-- Head 1 -->
+            <div class="head head-1">
+                <div class="head-title">🔍 Head 1: Semantic Relationships</div>
+                <p style="text-align: center; font-style: italic;">Focuses on meaning and conceptual connections</p>
+                
+                <h4>Weight Matrices (4×4):</h4>
+                <div class="matrix-container">
+                    <div>
+                        <strong>W<sub>Q1</sub></strong>
+                        <div class="matrix matrix-4x4">
+                            <div class="matrix-cell">0.8</div><div class="matrix-cell">0.2</div><div class="matrix-cell">0.1</div><div class="matrix-cell">0.3</div>
+                            <div class="matrix-cell">0.1</div><div class="matrix-cell">0.9</div><div class="matrix-cell">0.4</div><div class="matrix-cell">0.2</div>
+                            <div class="matrix-cell">0.6</div><div class="matrix-cell">0.4</div><div class="matrix-cell">0.7</div><div class="matrix-cell">0.5</div>
+                            <div class="matrix-cell">0.3</div><div class="matrix-cell">0.7</div><div class="matrix-cell">0.2</div><div class="matrix-cell">0.8</div>
+                        </div>
+                    </div>
+                    <div>
+                        <strong>W<sub>K1</sub></strong>
+                        <div class="matrix matrix-4x4">
+                            <div class="matrix-cell">0.7</div><div class="matrix-cell">0.3</div><div class="matrix-cell">0.2</div><div class="matrix-cell">0.4</div>
+                            <div class="matrix-cell">0.4</div><div class="matrix-cell">0.6</div><div class="matrix-cell">0.5</div><div class="matrix-cell">0.3</div>
+                            <div class="matrix-cell">0.9</div><div class="matrix-cell">0.1</div><div class="matrix-cell">0.8</div><div class="matrix-cell">0.2</div>
+                            <div class="matrix-cell">0.2</div><div class="matrix-cell">0.8</div><div class="matrix-cell">0.3</div><div class="matrix-cell">0.7</div>
+                        </div>
+                    </div>
+                    <div>
+                        <strong>W<sub>V1</sub></strong>
+                        <div class="matrix matrix-4x4">
+                            <div class="matrix-cell">0.5</div><div class="matrix-cell">0.5</div><div class="matrix-cell">0.3</div><div class="matrix-cell">0.2</div>
+                            <div class="matrix-cell">0.8</div><div class="matrix-cell">0.2</div><div class="matrix-cell">0.6</div><div class="matrix-cell">0.4</div>
+                            <div class="matrix-cell">0.3</div><div class="matrix-cell">0.7</div><div class="matrix-cell">0.5</div><div class="matrix-cell">0.1</div>
+                            <div class="matrix-cell">0.6</div><div class="matrix-cell">0.4</div><div class="matrix-cell">0.2</div><div class="matrix-cell">0.8</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="computation">
+                    <strong>Q₁ for "apple":</strong> [0.81, 0.67, 0.89, 0.73]<br>
+                    <em>Calculation: [0.6, 0.4, 1.0, 0.2] × W<sub>Q1</sub></em>
+                </div>
+                
+                <h4>Attention Weights:</h4>
+                <table>
+                    <tr><th>Word</th><th>Weight</th></tr>
+                    <tr><td>I</td><td>0.151</td></tr>
+                    <tr><td>bought</td><td>0.184</td></tr>
+                    <tr><td>apple</td><td>0.162</td></tr>
+                    <tr><td>to</td><td>0.121</td></tr>
+                    <tr><td>eat</td><td>0.382</td></tr>
+                </table>
+                
+                <div class="bar-chart">
+                    <div class="bar">
+                        <div class="bar-fill" style="height: 40px;"></div>
+                        <div class="bar-label">I</div>
+                        <div class="bar-value">0.151</div>
+                    </div>
+                    <div class="bar">
+                        <div class="bar-fill" style="height: 48px;"></div>
+                        <div class="bar-label">bought</div>
+                        <div class="bar-value">0.184</div>
+                    </div>
+                    <div class="bar">
+                        <div class="bar-fill" style="height: 43px;"></div>
+                        <div class="bar-label">apple</div>
+                        <div class="bar-value">0.162</div>
+                    </div>
+                    <div class="bar">
+                        <div class="bar-fill" style="height: 32px;"></div>
+                        <div class="bar-label">to</div>
+                        <div class="bar-value">0.121</div>
+                    </div>
+                    <div class="bar">
+                        <div class="bar-fill" style="height: 100px;"></div>
+                        <div class="bar-label">eat</div>
+                        <div class="bar-value">0.382</div>
+                    </div>
+                </div>
+                
+                <div class="head-output">
+                    <strong>Head 1 Output:</strong> [0.58, 0.46, 0.37, 0.46]<br>
+                    <em>Focus: Strong attention to "eat" - captures food consumption semantics</em>
+                </div>
+            </div>
+            
+            <!-- Head 2 -->
+            <div class="head head-2">
+                <div class="head-title">📍 Head 2: Positional/Syntactic</div>
+                <p style="text-align: center; font-style: italic;">Focuses on word order and grammatical structure</p>
+                
+                <h4>Weight Matrices (4×4):</h4>
+                <div class="matrix-container">
+                    <div>
+                        <strong>W<sub>Q2</sub></strong>
+                        <div class="matrix matrix-4x4">
+                            <div class="matrix-cell">0.4</div><div class="matrix-cell">0.6</div><div class="matrix-cell">0.3</div><div class="matrix-cell">0.2</div>
+                            <div class="matrix-cell">0.9</div><div class="matrix-cell">0.1</div><div class="matrix-cell">0.5</div><div class="matrix-cell">0.4</div>
+                            <div class="matrix-cell">0.2</div><div class="matrix-cell">0.8</div><div class="matrix-cell">0.6</div><div class="matrix-cell">0.3</div>
+                            <div class="matrix-cell">0.7</div><div class="matrix-cell">0.3</div><div class="matrix-cell">0.2</div><div class="matrix-cell">0.9</div>
+                        </div>
+                    </div>
+                    <div>
+                        <strong>W<sub>K2</sub></strong>
+                        <div class="matrix matrix-4x4">
+                            <div class="matrix-cell">0.6</div><div class="matrix-cell">0.4</div><div class="matrix-cell">0.5</div><div class="matrix-cell">0.3</div>
+                            <div class="matrix-cell">0.3</div><div class="matrix-cell">0.7</div><div class="matrix-cell">0.2</div><div class="matrix-cell">0.6</div>
+                            <div class="matrix-cell">0.8</div><div class="matrix-cell">0.2</div><div class="matrix-cell">0.7</div><div class="matrix-cell">0.4</div>
+                            <div class="matrix-cell">0.1</div><div class="matrix-cell">0.9</div><div class="matrix-cell">0.3</div><div class="matrix-cell">0.8</div>
+                        </div>
+                    </div>
+                    <div>
+                        <strong>W<sub>V2</sub></strong>
+                        <div class="matrix matrix-4x4">
+                            <div class="matrix-cell">0.9</div><div class="matrix-cell">0.1</div><div class="matrix-cell">0.4</div><div class="matrix-cell">0.2</div>
+                            <div class="matrix-cell">0.2</div><div class="matrix-cell">0.8</div><div class="matrix-cell">0.3</div><div class="matrix-cell">0.5</div>
+                            <div class="matrix-cell">0.5</div><div class="matrix-cell">0.5</div><div class="matrix-cell">0.7</div><div class="matrix-cell">0.1</div>
+                            <div class="matrix-cell">0.4</div><div class="matrix-cell">0.6</div><div class="matrix-cell">0.2</div><div class="matrix-cell">0.8</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="computation">
+                    <strong>Q₂ for "apple":</strong> [0.54, 0.84, 0.76, 0.49]<br>
+                    <em>Calculation: [0.6, 0.4, 1.0, 0.2] × W<sub>Q2</sub></em>
+                </div>
+                
+                <h4>Attention Weights:</h4>
+                <table>
+                    <tr><th>Word</th><th>Weight</th></tr>
+                    <tr><td>I</td><td>0.269</td></tr>
+                    <tr><td>bought</td><td>0.315</td></tr>
+                    <tr><td>apple</td><td>0.221</td></tr>
+                    <tr><td>to</td><td>0.147</td></tr>
+                    <tr><td>eat</td><td>0.048</td></tr>
+                </table>
+                
+                <div class="bar-chart">
+                    <div class="bar">
+                        <div class="bar-fill" style="height: 85px;"></div>
+                        <div class="bar-label">I</div>
+                        <div class="bar-value">0.269</div>
+                    </div>
+                    <div class="bar">
+                        <div class="bar-fill" style="height: 100px;"></div>
+                        <div class="bar-label">bought</div>
+                        <div class="bar-value">0.315</div>
+                    </div>
+                    <div class="bar">
+                        <div class="bar-fill" style="height: 70px;"></div>
+                        <div class="bar-label">apple</div>
+                        <div class="bar-value">0.221</div>
+                    </div>
+                    <div class="bar">
+                        <div class="bar-fill" style="height: 47px;"></div>
+                        <div class="bar-label">to</div>
+                        <div class="bar-value">0.147</div>
+                    </div>
+                    <div class="bar">
+                        <div class="bar-fill" style="height: 15px;"></div>
+                        <div class="bar-label">eat</div>
+                        <div class="bar-value">0.048</div>
+                    </div>
+                </div>
+                
+                <div class="head-output">
+                    <strong>Head 2 Output:</strong> [0.61, 0.42, 0.47, 0.32]<br>
+                    <em>Focus: Strong attention to "bought" - captures subject-verb-object structure</em>
+                </div>
+            </div>
+            
+            <!-- Head 3 -->
+            <div class="head head-3">
+                <div class="head-title">🎯 Head 3: Contextual Purpose</div>
+                <p style="text-align: center; font-style: italic;">Focuses on intentions and purposes</p>
+                
+                <h4>Weight Matrices (4×4):</h4>
+                <div class="matrix-container">
+                    <div>
+                        <strong>W<sub>Q3</sub></strong>
+                        <div class="matrix matrix-4x4">
+                            <div class="matrix-cell">0.3</div><div class="matrix-cell">0.7</div><div class="matrix-cell">0.4</div><div class="matrix-cell">0.2</div>
+                            <div class="matrix-cell">0.8</div><div class="matrix-cell">0.2</div><div class="matrix-cell">0.5</div><div class="matrix-cell">0.3</div>
+                            <div class="matrix-cell">0.5</div><div class="matrix-cell">0.5</div><div class="matrix-cell">0.6</div><div class="matrix-cell">0.4</div>
+                            <div class="matrix-cell">0.9</div><div class="matrix-cell">0.1</div><div class="matrix-cell">0.3</div><div class="matrix-cell">0.8</div>
+                        </div>
+                    </div>
+                    <div>
+                        <strong>W<sub>K3</sub></strong>
+                        <div class="matrix matrix-4x4">
+                            <div class="matrix-cell">0.5</div><div class="matrix-cell">0.5</div><div class="matrix-cell">0.3</div><div class="matrix-cell">0.4</div>
+                            <div class="matrix-cell">0.7</div><div class="matrix-cell">0.3</div><div class="matrix-cell">0.6</div><div class="matrix-cell">0.2</div>
+                            <div class="matrix-cell">0.4</div><div class="matrix-cell">0.6</div><div class="matrix-cell">0.7</div><div class="matrix-cell">0.3</div>
+                            <div class="matrix-cell">0.8</div><div class="matrix-cell">0.2</div><div class="matrix-cell">0.4</div><div class="matrix-cell">0.9</div>
+                        </div>
+                    </div>
+                    <div>
+                        <strong>W<sub>V3</sub></strong>
+                        <div class="matrix matrix-4x4">
+                            <div class="matrix-cell">0.7</div><div class="matrix-cell">0.3</div><div class="matrix-cell">0.2</div><div class="matrix-cell">0.4</div>
+                            <div class="matrix-cell">0.1</div><div class="matrix-cell">0.9</div><div class="matrix-cell">0.5</div><div class="matrix-cell">0.3</div>
+                            <div class="matrix-cell">0.6</div><div class="matrix-cell">0.4</div><div class="matrix-cell">0.8</div><div class="matrix-cell">0.2</div>
+                            <div class="matrix-cell">0.2</div><div class="matrix-cell">0.8</div><div class="matrix-cell">0.3</div><div class="matrix-cell">0.7</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="computation">
+                    <strong>Q₃ for "apple":</strong> [0.63, 0.61, 0.67, 0.47]<br>
+                    <em>Calculation: [0.6, 0.4, 1.0, 0.2] × W<sub>Q3</sub></em>
+                </div>
+                
+                <h4>Attention Weights:</h4>
+                <table>
+                    <tr><th>Word</th><th>Weight</th></tr>
+                    <tr><td>I</td><td>0.156</td></tr>
+                    <tr><td>bought</td><td>0.137</td></tr>
+                    <tr><td>apple</td><td>0.166</td></tr>
+                    <tr><td>to</td><td>0.235</td></tr>
+                    <tr><td>eat</td><td>0.306</td></tr>
+                </table>
+                
+                <div class="bar-chart">
+                    <div class="bar">
+                        <div class="bar-fill" style="height: 51px;"></div>
+                        <div class="bar-label">I</div>
+                        <div class="bar-value">0.156</div>
+                    </div>
+                    <div class="bar">
+                        <div class="bar-fill" style="height: 45px;"></div>
+                        <div class="bar-label">bought</div>
+                        <div class="bar-value">0.137</div>
+                    </div>
+                    <div class="bar">
+                        <div class="bar-fill" style="height: 54px;"></div>
+                        <div class="bar-label">apple</div>
+                        <div class="bar-value">0.166</div>
+                    </div>
+                    <div class="bar">
+                        <div class="bar-fill" style="height: 77px;"></div>
+                        <div class="bar-label">to</div>
+                        <div class="bar-value">0.235</div>
+                    </div>
+                    <div class="bar">
+                        <div class="bar-fill" style="height: 100px;"></div>
+                        <div class="bar-label">eat</div>
+                        <div class="bar-value">0.306</div>
+                    </div>
+                </div>
+                
+                <div class="head-output">
+                    <strong>Head 3 Output:</strong> [0.39, 0.61, 0.46, 0.38]<br>
+                    <em>Focus: Strong attention to "to" and "eat" - captures purpose/intention relationships</em>
+                </div>
+            </div>
+        </div>
+        
+        <h2>Step 3: Multi-Head Attention Concatenation & Final Output</h2>
+        
+        <div class="concatenation">
+            <h3>🔗 Concatenate Head Outputs</h3>
+            <div style="text-align: center; margin: 20px 0;">
+                <strong>Concat([0.58, 0.46, 0.37, 0.46], [0.61, 0.42, 0.47, 0.32], [0.39, 0.61, 0.46, 0.38]) = [0.58, 0.46, 0.37, 0.46, 0.61, 0.42, 0.47, 0.32, 0.39, 0.61, 0.46, 0.38]</strong>
+            </div>
+            
+            <h3>🔧 Linear Transformation (12×4)</h3>
+            <div style="text-align: center; margin: 15px 0;">
+                <strong>W<sub>O</sub> (Output Weight Matrix):</strong>
+                <div class="matrix" style="grid-template-columns: repeat(4, 50px); margin: 15px auto;">
+                    <div class="matrix-cell">0.5</div><div class="matrix-cell">0.3</div><div class="matrix-cell">0.2</div><div class="matrix-cell">0.4</div>
+                    <div class="matrix-cell">0.2</div><div class="matrix-cell">0.8</div><div class="matrix-cell">0.1</div><div class="matrix-cell">0.6</div>
+                    <div class="matrix-cell">0.7</div><div class="matrix-cell">0.1</div><div class="matrix-cell">0.9</div><div class="matrix-cell">0.3</div>
+                    <div class="matrix-cell">0.4</div><div class="matrix-cell">0.6</div><div class="matrix-cell">0.2</div><div class="matrix-cell">0.8</div>
+                    <div class="matrix-cell">0.9</div><div class="matrix-cell">0.2</div><div class="matrix-cell">0.3</div><div class="matrix-cell">0.7</div>
+                    <div class="matrix-cell">0.3</div><div class="matrix-cell">0.7</div><div class="matrix-cell">0.4</div><div class="matrix-cell">0.5</div>
+                    <div class="matrix-cell">0.6</div><div class="matrix-cell">0.4</div><div class="matrix-cell">0.8</div><div class="matrix-cell">0.2</div>
+                    <div class="matrix-cell">0.2</div><div class="matrix-cell">0.9</div><div class="matrix-cell">0.3</div><div class="matrix-cell">0.6</div>
+                    <div class="matrix-cell">0.8</div><div class="matrix-cell">0.3</div><div class="matrix-cell">0.5</div><div class="matrix-cell">0.4</div>
+                    <div class="matrix-cell">0.1</div><div class="matrix-cell">0.6</div><div class="matrix-cell">0.2</div><div class="matrix-cell">0.9</div>
+                    <div class="matrix-cell">0.7</div><div class="matrix-cell">0.4</div><div class="matrix-cell">0.8</div><div class="matrix-cell">0.3</div>
+                    <div class="matrix-cell">0.5</div><div class="matrix-cell">0.2</div><div class="matrix-cell">0.6</div><div class="matrix-cell">0.7</div>
+                </div>
+            </div>
+            
+            <div class="computation">
+                <strong>Calculation:</strong><br>
+                Final = [0.58, 0.46, 0.37, 0.46, 0.61, 0.42, 0.47, 0.32, 0.39, 0.61, 0.46, 0.38] × W<sub>O</sub><br>
+                = [0.58×0.5 + 0.46×0.2 + 0.37×0.7 + 0.46×0.4 + 0.61×0.9 + 0.42×0.3 + 0.47×0.6 + 0.32×0.2 + 0.39×0.8 + 0.61×0.1 + 0.46×0.7 + 0.38×0.5, <br>
+                   0.58×0.3 + 0.46×0.8 + 0.37×0.1 + 0.46×0.6 + 0.61×0.2 + 0.42×0.7 + 0.47×0.4 + 0.32×0.9 + 0.39×0.3 + 0.61×0.6 + 0.46×0.4 + 0.38×0.2, <br>
+                   0.58×0.2 + 0.46×0.1 + 0.37×0.9 + 0.46×0.2 + 0.61×0.3 + 0.42×0.4 + 0.47×0.8 + 0.32×0.3 + 0.39×0.5 + 0.61×0.2 + 0.46×0.8 + 0.38×0.6, <br>
+                   0.58×0.4 + 0.46×0.6 + 0.37×0.3 + 0.46×0.8 + 0.61×0.7 + 0.42×0.5 + 0.47×0.2 + 0.32×0.6 + 0.39×0.4 + 0.61×0.9 + 0.46×0.3 + 0.38×0.7]
+            </div>
+        </div>
+        
+        <div class="final-result">
+            <h2>🎯 Final Multi-Head Attention Output for "apple"</h2>
+            <div style="font-size: 1.4em; font-weight: bold; margin: 20px 0;">
+                Output = [2.04, 1.93, 1.85, 2.32]
+            </div>
+            <div style="font-size: 1em; color: #666; margin: 10px 0;">
+                Combined knowledge from all three attention heads
+            </div>
+        </div>
+        
+        <h2>📊 Comparison: Single Head vs Multi-Head</h2>
+        
+        <table class="comparison-table">
+            <tr>
+                <th>Attention Type</th>
+                <th>Primary Focus</th>
+                <th>Top Attention</th>
+                <th>Output Vector</th>
+                <th>What It Captures</th>
+            </tr>
+            <tr>
+                <td><strong>Single Head</strong><br>(Previous Example)</td>
+                <td>General relationships</td>
+                <td>bought (0.217)<br>eat (0.217)</td>
+                <td>[0.969, 0.702]</td>
+                <td>Overall context</td>
+            </tr>
+            <tr style="background: #ffebee;">
+                <td><strong>Head 1: Semantic</strong></td>
+                <td>Meaning & concepts</td>
+                <td>eat (0.382)</td>
+                <td>[0.58, 0.46, 0.37, 0.46]</td>
+                <td>Food consumption semantics</td>
+            </tr>
+            <tr style="background: #e3f2fd;">
+                <td><strong>Head 2: Syntactic</strong></td>
+                <td>Grammar & structure</td>
+                <td>bought (0.315)</td>
+                <td>[0.61, 0.42, 0.47, 0.32]</td>
+                <td>Subject-verb-object relations</td>
+            </tr>
+            <tr style="background: #e8f5e8;">
+                <td><strong>Head 3: Purpose</strong></td>
+                <td>Intent & goals</td>
+                <td>eat (0.306)</td>
+                <td>[0.39, 0.61, 0.46, 0.38]</td>
+                <td>Purpose and intention</td>
+            </tr>
+            <tr style="background: #fff3cd;">
+                <td><strong>Multi-Head Combined</strong></td>
+                <td>All aspects together</td>
+                <td>Holistic view</td>
+                <td><strong>[2.04, 1.93, 1.85, 2.32]</strong></td>
+                <td><strong>Rich, multi-faceted understanding</strong></td>
+            </tr>
+        </table>
+        
+        <div class="explanation">
+            <h3>🔍 What Multi-Head Attention Achieves:</h3>
+            
+            <h4>🎯 Parallel Processing of Different Relationships:</h4>
+            <ul style="line-height: 1.8; margin-left: 20px;">
+                <li><strong>Head 1 (Semantic):</strong> Focuses on <em>what</em> "apple" means in context - strongly attends to "eat" (0.382), understanding this is about food consumption.</li>
+                
+                <li><strong>Head 2 (Syntactic):</strong> Focuses on <em>how</em> words relate grammatically - strongly attends to "bought" (0.315), capturing the verb-object relationship.</li>
+                
+                <li><strong>Head 3 (Purpose):</strong> Focuses on <em>why</em> - strongly attends to "eat" (0.306) and "to" (0.235), understanding the purpose/intention behind the action.</li>
+            </ul>
+            
+            <h4>🧠 Key Advantages of Multi-Head Attention:</h4>
+            <ul style="line-height: 1.8; margin-left: 20px;">
+                <li><strong>Specialization:</strong> Each head learns to focus on different types of relationships (semantic, syntactic, purposive)</li>
+                
+                <li><strong>Parallel Processing:</strong> All heads compute simultaneously, making the model efficient</li>
+                
+                <li><strong>Rich Representations:</strong> The final vector [2.04, 1.93, 1.85, 2.32] contains information from all perspectives</li>
+                
+                <li><strong>Robustness:</strong> If one head fails to capture important information, others can compensate</li>
+                
+                <li><strong>Expressiveness:</strong> Can model complex, multi-faceted relationships that single attention can't capture</li>
+            </ul>
+            
+            <h4>🔬 Why This Matters:</h4>
+            <p>Language is inherently multi-dimensional. When we say "I bought apple to eat," we're simultaneously expressing:</p>
+            <ul style="line-height: 1.8; margin-left: 20px;">
+                <li><strong>Semantic meaning:</strong> Apple is food, not a company</li>
+                <li><strong>Syntactic structure:</strong> Subject-verb-object-purpose grammar</li>
+                <li><strong>Intentional purpose:</strong> The goal of purchasing is consumption</li>
+            </ul>
+            
+            <p><strong>Multi-head attention captures all these dimensions simultaneously!</strong> The final representation [2.04, 1.93, 1.85, 2.32] is much richer than any single head could produce, enabling the model to understand language with human-like nuance.</p>
+            
+            <h4>📈 Real-World Impact:</h4>
+            <p>This is why Transformers with multi-head attention excel at:</p>
+            <ul style="line-height: 1.8; margin-left: 20px;">
+                <li><strong>Translation:</strong> Understanding both meaning and grammar</li>
+                <li><strong>Question Answering:</strong> Capturing intent and factual relationships</li>
+                <li><strong>Text Generation:</strong> Maintaining coherent, contextually appropriate responses</li>
+                <li><strong>Sentiment Analysis:</strong> Understanding emotional and factual content</li>
+            </ul>
+        </div>
+        
+        <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; border-left: 4px solid #9b59b6; margin: 20px 0;">
+            <h3>🎓 Key Takeaway:</h3>
+            <p style="font-size: 1.1em; font-weight: bold; color: #8e44ad;">
+                Multi-head attention doesn't just scale up single attention - it creates specialized "experts" that each focus on different aspects of language, then combines their insights into a comprehensive understanding. This parallel specialization is what makes Transformers so powerful at understanding the full complexity of human language!
+            </p>
+        </div>
+    </div>
+</body>
+</html>
