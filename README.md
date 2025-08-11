@@ -82,3 +82,12 @@ The Data Science curriculum assumes the learner has taken basic school math and 
 * [Topic Modelling](https://github.com/nursnaaz/FutureDataScienceLegends/tree/main/30.%20Topic%20Modelling)
 * [Seq2Seq Model - Machine Translation](https://github.com/nursnaaz/FutureDataScienceLegends/tree/main/31.%20Seq2Seq%20Model%20-%20Machine%20Translation)
   
+* [Transformers](https://github.com/nursnaaz/FutureDataScienceLegends/tree/main/32.%20Transformer)
+* [BERT](https://github.com/nursnaaz/FutureDataScienceLegends/tree/main/33.%20BERT)  
+* [BART](https://github.com/nursnaaz/FutureDataScienceLegends/tree/main/34.%20BART) 
+
+
+# Generative AI
+* [GPT-1](https://github.com/nursnaaz/FutureDataScienceLegends/tree/main/35.%20GPT-1)
+* [GPT-2](https://github.com/nursnaaz/FutureDataScienceLegends/tree/main/36.%20GPT-2)
+* [GPT-3](https://github.com/nursnaaz/FutureDataScienceLegends/tree/main/37.%20GPT-3)
