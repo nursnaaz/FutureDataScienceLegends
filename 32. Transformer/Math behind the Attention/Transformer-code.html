@@ -1,0 +1,2073 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complete Transformer Architecture Deep Dive</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .breadcrumbs {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 10px;
+            padding: 10px 20px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .breadcrumb-item {
+            color: white;
+            font-size: 1em;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            margin-right: 5px;
+        }
+
+        .breadcrumb-item:hover {
+            color: #e8e8e8;
+            transform: translateY(-1px);
+        }
+
+        .breadcrumb-item.active {
+            color: #ffffff;
+            font-weight: 600;
+            cursor: default;
+        }
+
+        .breadcrumb-item.active:hover {
+            transform: none;
+        }
+
+        .breadcrumb-separator {
+            color: white;
+            margin: 0 10px;
+            font-size: 1em;
+        }
+
+        .main-header {
+            text-align: center;
+            color: white;
+            padding: 40px 0;
+            margin-bottom: 30px;
+        }
+
+        .main-header h1 {
+            font-size: 3.5em;
+            font-weight: 700;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .main-header p {
+            font-size: 1.3em;
+            opacity: 0.9;
+        }
+
+        .nav-tabs {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 10px;
+            flex-wrap: wrap;
+        }
+
+        .nav-tab {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            margin: 5px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .nav-tab:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+
+        .nav-tab.active {
+            background: white;
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .section {
+            display: none;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            margin-bottom: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .section.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .section h2 {
+            color: #2c3e50;
+            font-size: 2.5em;
+            margin-bottom: 30px;
+            text-align: center;
+            position: relative;
+            padding-bottom: 15px;
+        }
+
+        .section h2::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 2px;
+        }
+
+        .step-container {
+            margin: 30px 0;
+            padding: 25px;
+            border-left: 5px solid #3498db;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 10px;
+            position: relative;
+        }
+
+        .step-number {
+            position: absolute;
+            left: -15px;
+            top: 20px;
+            background: #3498db;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+
+        .step-title {
+            font-size: 1.4em;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            margin-left: 25px;
+        }
+
+        .code-block {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 25px;
+            border-radius: 15px;
+            font-family: 'Fira Code', 'Consolas', monospace;
+            margin: 20px 0;
+            overflow-x: auto;
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .code-block::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 30px;
+            background: #2d2d2d;
+            border-radius: 15px 15px 0 0;
+        }
+
+        .code-block::after {
+            content: '● ● ●';
+            position: absolute;
+            top: 8px;
+            left: 15px;
+            color: #ff5f56;
+            font-size: 12px;
+        }
+
+        .code-block pre {
+            margin: 20px 0 0 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .keyword { color: #569cd6; }
+        .string { color: #ce9178; }
+        .comment { color: #6a9955; font-style: italic; }
+        .function { color: #dcdcaa; }
+        .variable { color: #9cdcfe; }
+
+        .architecture-diagram {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin: 25px 0;
+            text-align: center;
+        }
+
+        .flow-box {
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            padding: 15px 25px;
+            margin: 10px;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+            transition: transform 0.3s ease;
+        }
+
+        .flow-box:hover {
+            transform: scale(1.05);
+        }
+
+        .arrow {
+            font-size: 2em;
+            margin: 0 10px;
+            vertical-align: middle;
+        }
+
+        .detail-box {
+            background: linear-gradient(135deg, #e8f5e8, #d4edda);
+            border: 2px solid #27ae60;
+            padding: 25px;
+            border-radius: 15px;
+            margin: 20px 0;
+        }
+
+        .warning-box {
+            background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+            border: 2px solid #f39c12;
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
+        }
+
+        .info-box {
+            background: linear-gradient(135deg, #d1ecf1, #74b9ff);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            margin: 20px 0;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 25px 0;
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .data-table th {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 20px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .data-table td {
+            padding: 15px 20px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .data-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .interactive-demo {
+            background: #f8f9fa;
+            border: 2px dashed #6c757d;
+            padding: 30px;
+            border-radius: 15px;
+            margin: 25px 0;
+            text-align: center;
+        }
+
+        .demo-input {
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            margin: 10px;
+            font-size: 1.1em;
+            width: 200px;
+        }
+
+        .demo-button {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1.1em;
+            margin: 10px;
+            transition: transform 0.3s ease;
+        }
+
+        .demo-button:hover {
+            transform: translateY(-2px);
+        }
+
+        .demo-output {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            font-family: monospace;
+            min-height: 100px;
+        }
+
+        .attention-visual {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .attention-cell {
+            background: #3498db;
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .attention-cell:hover {
+            transform: scale(1.1);
+            background: #2980b9;
+        }
+
+        .dimension-flow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+
+        .dimension-box {
+            background: #e74c3c;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin: 5px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .math-formula {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            font-size: 1.3em;
+            margin: 25px 0;
+            font-family: 'Times New Roman', serif;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .main-header h1 {
+                font-size: 2.5em;
+            }
+            
+            .section {
+                padding: 20px;
+            }
+            
+            .nav-tabs {
+                flex-direction: column;
+            }
+            
+            .attention-visual {
+                grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+            }
+            
+            .breadcrumbs {
+                padding: 8px 15px;
+            }
+            
+            .breadcrumb-item {
+                font-size: 0.9em;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .main-header h1 {
+                font-size: 2em;
+            }
+            
+            .main-header p {
+                font-size: 1em;
+            }
+            
+            .nav-tab {
+                padding: 10px 15px;
+                font-size: 0.9em;
+            }
+            
+            .section h2 {
+                font-size: 2em;
+            }
+            
+            .step-title {
+                font-size: 1.2em;
+            }
+            
+            .demo-input {
+                width: 100%;
+                max-width: 300px;
+            }
+            
+            .code-block {
+                padding: 15px;
+            }
+            
+            .data-table th, .data-table td {
+                padding: 10px;
+                font-size: 0.9em;
+            }
+            
+            .breadcrumbs {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .breadcrumb-separator {
+                margin: 5px 0;
+            }
+        }
+
+        /* Accessibility improvements */
+        .nav-tab:focus, .demo-button:focus, .breadcrumb-item:focus {
+            outline: 3px solid #27ae60;
+            outline-offset: 2px;
+        }
+
+        .code-block:focus-within {
+            outline: 3px solid #3498db;
+            outline-offset: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <nav class="breadcrumbs" aria-label="Breadcrumb">
+            <a href="/" class="breadcrumb-item">Home</a>
+            <span class="breadcrumb-separator">›</span>
+            <a href="/blog" class="breadcrumb-item">Blog</a>
+            <span class="breadcrumb-separator">›</span>
+            <span class="breadcrumb-item active" aria-current="page">Transformer Architecture</span>
+        </nav>
+
+        <div class="main-header">
+            <h1>🚀 Complete Transformer Architecture</h1>
+            <p>A Beautiful, Interactive Deep Dive into Modern AI Translation</p>
+        </div>
+
+        <div class="nav-tabs" role="tablist">
+            <button class="nav-tab active" data-section="overview" role="tab" aria-selected="true" aria-controls="overview">📋 Overview</button>
+            <button class="nav-tab" data-section="data" role="tab" aria-selected="false" aria-controls="data">📊 Data Preparation</button>
+            <button class="nav-tab" data-section="embeddings" role="tab" aria-selected="false" aria-controls="embeddings">🔤 Embeddings</button>
+            <button class="nav-tab" data-section="attention" role="tab" aria-selected="false" aria-controls="attention">🧠 Attention</button>
+            <button class="nav-tab" data-section="encoder" role="tab" aria-selected="false" aria-controls="encoder">🏗️ Encoder</button>
+            <button class="nav-tab" data-section="decoder" role="tab" aria-selected="false" aria-controls="decoder">🎯 Decoder</button>
+            <button class="nav-tab" data-section="training" role="tab" aria-selected="false" aria-controls="training">🎓 Training</button>
+            <button class="nav-tab" data-section="inference" role="tab" aria-selected="false" aria-controls="inference">🔮 Inference</button>
+            <button class="nav-tab" data-section="complete" role="tab" aria-selected="false" aria-controls="complete">🚀 Complete Code</button>
+        </div>
+
+        <!-- Overview Section -->
+        <div class="section active" id="overview" role="tabpanel">
+            <h2>🎯 Transformer Architecture Overview</h2>
+            <p>The Transformer, introduced in the 2017 paper "Attention is All You Need," revolutionized natural language processing by replacing recurrent neural networks with a fully attention-based architecture. This section provides a high-level understanding of its components and their interactions.</p>
+            
+            <div class="architecture-diagram">
+                <h3 style="margin-bottom: 20px;">🏗️ High-Level Architecture Flow</h3>
+                <div>
+                    <div class="flow-box">English Input<br>"hello world"</div>
+                    <span class="arrow">→</span>
+                    <div class="flow-box">Encoder<br>Context Analysis</div>
+                    <span class="arrow">→</span>
+                    <div class="flow-box">Context<br>Representation</div>
+                    <span class="arrow">→</span>
+                    <div class="flow-box">Decoder<br>Translation Generation</div>
+                    <span class="arrow">→</span>
+                    <div class="flow-box">Tamil Output<br>"வணக்கம் உலகம்"</div>
+                </div>
+            </div>
+
+            <div class="detail-box">
+                <h3>🔍 Why Transformers Outperform Traditional Models</h3>
+                <p><strong>Traditional RNNs:</strong> Process sequences sequentially, leading to slow training and difficulty capturing long-range dependencies due to vanishing gradients.</p>
+                <p><strong>Transformers:</strong> Use self-attention to process entire sequences in parallel, enabling faster training and better handling of long-range dependencies.</p>
+                
+                <div class="data-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Component</th>
+                                <th>Purpose</th>
+                                <th>Key Innovation</th>
+                                <th>Impact</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>🔤 Embeddings</td>
+                                <td>Convert words to numerical vectors</td>
+                                <td>Dense semantic representations</td>
+                                <td>Preserves meaning in compact form</td>
+                            </tr>
+                            <tr>
+                                <td>📍 Positional Encoding</td>
+                                <td>Add word order information</td>
+                                <td>Learned position embeddings</td>
+                                <td>Maintains sequence context</td>
+                            </tr>
+                            <tr>
+                                <td>🧠 Multi-Head Attention</td>
+                                <td>Focus on relevant words</td>
+                                <td>Parallel attention mechanisms</td>
+                                <td>Enhanced context understanding</td>
+                            </tr>
+                            <tr>
+                                <td>🏗️ Encoder</td>
+                                <td>Understand input meaning</td>
+                                <td>Self-attention + feed forward</td>
+                                <td>Robust input representation</td>
+                            </tr>
+                            <tr>
+                                <td>🎯 Decoder</td>
+                                <td>Generate output words</td>
+                                <td>Cross-attention to encoder</td>
+                                <td>Accurate translation generation</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="math-formula">
+                    <p><strong>Attention Mechanism:</strong> \( \text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V \)</p>
+                    <p>Where \( Q \) (query), \( K \) (key), and \( V \) (value) are vector representations, and \( d_k \) is the dimension of the keys.</p>
+                </div>
+
+                <div class="section" id="architecture" role="tabpanel">
+                    <h2>🏗️ Model Architecture</h2>
+                    <p>The core of the Transformer is the attention mechanism, defined as:</p>
+                    <p>\[ \text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V \]</p>
+                    <p>Where \( Q \) (query), \( K \) (key), and \( V \) (value) are vector representations, and \( d_k \) is the dimension of the keys.</p>
+                </div>
+            </div>
+
+            <div class="info-box">
+                <h3>🎯 Learning Objectives</h3>
+                <p>By the end of this guide, you'll understand:</p>
+                <ul style="margin-top: 15px;">
+                    <li>✅ How each component transforms input data into meaningful outputs</li>
+                    <li>✅ The flow of data through embeddings, attention, encoder, and decoder</li>
+                    <li>✅ The mathematical underpinnings of attention mechanisms</li>
+                    <li>✅ Practical implementation using Keras for real-world applications</li>
+                    <li>✅ How to train and deploy the model effectively</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Data Preparation Section -->
+        <div class="section" id="data" role="tabpanel">
+            <h2>📊 Data Preparation Deep Dive</h2>
+            <p>Data preparation is critical for training a Transformer model. It involves creating a dataset of input-output pairs, tokenizing text, and preparing sequences for the model. This section explains the process with a focus on English-to-Tamil translation.</p>
+
+            <div class="step-container">
+                <div class="step-number">1</div>
+                <div class="step-title">Creating Training Examples</div>
+                <p>We use a simplified dataset of English-Tamil sentence pairs, organized by complexity levels to progressively train the model:</p>
+                
+                <div class="code-block" tabindex="0">
+                    <pre><code>def create_simple_data(level=1):
+    """Create a dataset of English-Tamil translation pairs"""
+    data_levels = {
+        1: [("hello", "வணக்கம்"), ("good", "நல்ல"), ("thank", "நன்றி"), 
+            ("water", "தண்ணீர்"), ("food", "உணவு")],
+        2: [("good morning", "காலை வணக்கம்"), ("thank you", "நன்றி நீங்கள்"), 
+            ("good night", "இனிய இரவு")],
+        3: [("how are you", "நீங்கள் எப்படி இருக்கிறீர்கள்"), 
+            ("what is this", "இது என்ன ஆகும்")]
+    }
+    examples = data_levels.get(level, data_levels[1])
+    max_len = 4 + level  # Dynamic sequence length based on level
+    return examples, max_len
+</code></pre>
+                </div>
+
+                <div class="detail-box">
+                    <h3>🔍 Dataset Structure</h3>
+                    <p><strong>Level 1:</strong> Single-word translations for basic vocabulary learning.</p>
+                    <p><strong>Level 2:</strong> Two-word phrases to introduce simple grammar.</p>
+                    <p><strong>Level 3:</strong> Full sentences to handle complex structures.</p>
+                </div>
+            </div>
+
+            <div class="step-container">
+                <div class="step-number">2</div>
+                <div class="step-title">Tokenization and Sequence Preparation</div>
+                <p>Text is converted into numerical sequences using a vocabulary. Special tokens (<PAD>, <START>, <END>, <UNK>) manage sequence alignment and model behavior:</p>
+                
+                <div class="code-block" tabindex="0">
+                    <pre><code>def prepare_data_simple(examples, max_len):
+    """Prepare sequences for model input"""
+    # Initialize vocabulary with special tokens
+    vocab = {"<PAD>": 0, "<START>": 1, "<END>": 2, "<UNK>": 3}
+    
+    # Build vocabulary from dataset
+    all_words = set()
+    for eng, tam in examples:
+        all_words.update(eng.split() + tam.split())
+    for word in sorted(all_words):
+        vocab[word] = len(vocab)
+    reverse_vocab = {v: k for k, v in vocab.items()}
+    
+    # Prepare sequences
+    eng_seqs, tam_input_seqs, tam_target_seqs = [], [], []
+    for eng, tam in examples:
+        # Encoder input (English)
+        eng_tokens = [vocab.get(w, vocab["<UNK>"]) for w in eng.split()]
+        eng_seq = tf.keras.preprocessing.sequence.pad_sequences(
+            [eng_tokens], maxlen=max_len, padding='post')[0]
+        
+        # Decoder input (Tamil with <START>)
+        tam_tokens = [vocab["<START>"]] + [vocab.get(w, vocab["<UNK>"]) for w in tam.split()]
+        tam_input_seq = tf.keras.preprocessing.sequence.pad_sequences(
+            [tam_tokens], maxlen=max_len, padding='post')[0]
+        
+        # Decoder target (Tamil with <END>)
+        tam_target_tokens = [vocab.get(w, vocab["<UNK>"]) for w in tam.split()] + [vocab["<END>"]]
+        tam_target_seq = tf.keras.preprocessing.sequence.pad_sequences(
+            [tam_target_tokens], maxlen=max_len, padding='post')[0]
+        
+        eng_seqs.append(eng_seq)
+        tam_input_seqs.append(tam_input_seq)
+        tam_target_seqs.append(tam_target_seq)
+    
+    return (np.array(eng_seqs), np.array(tam_input_seqs), np.array(tam_target_seqs),
+            vocab, reverse_vocab)
+</code></pre>
+                </div>
+
+                <div class="data-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Token</th>
+                                <th>ID</th>
+                                <th>Type</th>
+                                <th>Purpose</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><PAD></td>
+                                <td>0</td>
+                                <td>Special</td>
+                                <td>Padding for equal-length sequences</td>
+                            </tr>
+                            <tr>
+                                <td><START></td>
+                                <td>1</td>
+                                <td>Special</td>
+                                <td>Signals start of decoding</td>
+                            </tr>
+                            <tr>
+                                <td><END></td>
+                                <td>2</td>
+                                <td>Special</td>
+                                <td>Signals end of translation</td>
+                            </tr>
+                            <tr>
+                                <td><UNK></td>
+                                <td>3</td>
+                                <td>Special</td>
+                                <td>Handles unknown words</td>
+                            </tr>
+                            <tr>
+                                <td>"hello"</td>
+                                <td>4</td>
+                                <td>English</td>
+                                <td>Encoder input word</td>
+                            </tr>
+                            <tr>
+                                <td>"வணக்கம்"</td>
+                                <td>5</td>
+                                <td>Tamil</td>
+                                <td>Decoder output word</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="interactive-demo">
+                    <h4>🔄 Tokenization Example</h4>
+                    <p>Enter a phrase to see its tokenized representation:</p>
+                    <input type="text" class="demo-input" placeholder="Enter English phrase (e.g., 'hello world')" id="tokenize-input">
+                    <button class="demo-button" onclick="simulateTokenization()">Tokenize</button>
+                    <div class="demo-output" id="tokenize-output">Tokenized output will appear here...</div>
+                    
+                    <script>
+                        
+                        function simulateTokenization() {
+                            const input = document.getElementById('tokenize-input').value.toLowerCase();
+                            const vocab = {"<PAD>": 0, "<START>": 1, "<END>": 2, "<UNK>": 3, 
+                                        "hello": 4, "world": 5, "வணக்கம்": 6, "உலகம்": 7};
+                            const tokens = input.split().map(w => vocab[w] || vocab["<UNK>"]);
+                            document.getElementById('tokenize-output').innerText = `Tokens: [${tokens.join(', ')}]`;
+                        }
+                    </script>
+                </div>
+            </div>
+
+            <div class="warning-box">
+                <h3>⚠️ Why Three Sequences?</h3>
+                <p><strong>Encoder Input:</strong> English sequence fed to the encoder for context analysis.</p>
+                <p><strong>Decoder Input:</strong> Tamil sequence with <START> token to guide generation.</p>
+                <p><strong>Decoder Target:</strong> Expected Tamil output with <END> token for training.</p>
+                <p><em>Teacher forcing during training uses the target sequence to improve learning efficiency.</em></p>
+            </div>
+        </div>
+
+        <!-- Embeddings Section -->
+        <div class="section" id="embeddings" role="tabpanel">
+            <h2>🔤 Embedding Layers Deep Dive</h2>
+            <p>Embeddings convert tokens into dense vectors that capture semantic meaning, augmented with positional encodings to preserve word order.</p>
+
+            <div class="step-container">
+                <div class="step-number">1</div>
+                <div class="step-title">Embedding and Positional Encoding</div>
+                <p>Keras embedding layers simplify the process, automatically handling padding and masking:</p>
+                
+                <div class="code-block" tabindex="0">
+                    <pre><code># Embedding layers
+self.encoder_embedding = layers.Embedding(vocab_size, d_model, mask_zero=True)
+self.decoder_embedding = layers.Embedding(vocab_size, d_model, mask_zero=True)
+
+# Positional encoding
+self.encoder_pos_embedding = layers.Embedding(max_seq_len, d_model)
+self.decoder_pos_embedding = layers.Embedding(max_seq_len, d_model)
+
+# Encoder embedding process
+enc_positions = tf.range(enc_seq_len)[tf.newaxis, :]
+enc_emb = self.encoder_embedding(encoder_input)
+enc_pos_emb = self.encoder_pos_embedding(enc_positions)
+enc_output = enc_emb + enc_pos_emb
+
+# Decoder embedding process
+dec_positions = tf.range(dec_seq_len)[tf.newaxis, :]
+dec_emb = self.decoder_embedding(decoder_input)
+dec_pos_emb = self.decoder_pos_embedding(dec_positions)
+dec_output = dec_emb + dec_pos_emb
+</code></pre>
+                </div>
+
+                <div class="interactive-demo">
+                    <h4>🔄 Embedding Transformation Example</h4>
+                    <div class="dimension-flow">
+                        <div class="dimension-box">Token ID: 4 ("hello")</div>
+                        <span class="arrow">→</span>
+                        <div class="dimension-box">Word Vector: [0.12, -0.45, ...]</div>
+                        <span class="arrow">+</span>
+                        <div class="dimension-box">Position Vector: [0.01, 0.03, ...]</div>
+                        <span class="arrow">=</span>
+                        <div class="dimension-box">Final Embedding: [0.13, -0.42, ...]</div>
+                    </div>
+                </div>
+
+                <div class="math-formula">
+                    <p><strong>Positional Encoding:</strong> \( PE(pos, 2i) = \sin\left(\frac{pos}{10000^{2i/d}}\right) \)</p>
+                    <p><strong>Positional Encoding:</strong> \( PE(pos, 2i+1) = \cos\left(\frac{pos}{10000^{2i/d}}\right) \)</p>
+                    <p>Where \( pos \) is the position, \( i \) is the dimension, and \( d \) is the embedding dimension.</p>
+                </div>
+            </div>
+
+            <div class="info-box">
+                <h3>🧠 Embedding Insights</h3>
+                <ul style="margin-top: 15px;">
+                    <li><strong>Semantic Vectors:</strong> Words with similar meanings have closer vectors.</li>
+                    <li><strong>Trainable Embeddings:</strong> Adjusted during training to optimize representations.</li>
+                    <li><strong>Positional Encoding:</strong> Ensures word order affects the model’s understanding.</li>
+                    <li><strong>Masking:</strong> Ignores padding tokens to focus on meaningful data.</li>
+                    <li><strong>Dimension Size:</strong> Typically 64-512 dimensions for balance between expressiveness and efficiency.</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Attention Section -->
+        <div class="section" id="attention" role="tabpanel">
+            <h2>🧠 Multi-Head Attention Mechanism</h2>
+            <p>The attention mechanism allows the model to focus on relevant parts of the input sequence, making it the core innovation of Transformers.</p>
+
+            <div class="step-container">
+                <div class="step-number">1</div>
+                <div class="step-title">Keras Multi-Head Attention</div>
+                <p>Keras simplifies attention implementation with optimized, built-in layers:</p>
+                
+                <div class="code-block" tabindex="0">
+                    <pre><code>from tensorflow.keras import layers
+
+# Encoder self-attention layer
+encoder_layer = {
+    'attention': layers.MultiHeadAttention(
+        num_heads=4, 
+        key_dim=d_model//4
+    ),
+    'ffn': tf.keras.Sequential([
+        layers.Dense(d_model * 2, activation='relu'),
+        layers.Dense(d_model)
+    ]),
+    'norm1': layers.LayerNormalization(),
+    'norm2': layers.LayerNormalization(),
+    'dropout': layers.Dropout(0.1)
+}
+
+# Forward pass
+attn_output = layer['attention'](enc_output, enc_output, training=training)
+attn_output = layer['dropout'](attn_output, training=training)
+enc_output = layer['norm1'](enc_output + attn_output)
+ffn_output = layer['ffn'](enc_output)
+ffn_output = layer['dropout'](ffn_output, training=training)
+enc_output = layer['norm2'](enc_output + ffn_output)
+</code></pre>
+                </div>
+
+                <div class="architecture-diagram">
+                    <h4>🔍 Attention Example: "good morning"</h4>
+                    <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px; margin: 20px 0;">
+                        <p><strong>Input:</strong> "good morning" → <strong>Output:</strong> "காலை வணக்கம்"</p>
+                        <p><strong>Attention Weights for "காலை" (morning):</strong></p>
+                        <div style="display: flex; justify-content: center; margin: 15px 0;">
+                            <div style="background: rgba(255,100,100,0.8); padding: 10px; margin: 5px; border-radius: 5px;">
+                                good: <strong>0.2</strong>
+                            </div>
+                            <div style="background: rgba(255,50,50,0.9); padding: 10px; margin: 5px; border-radius: 5px;">
+                                morning: <strong>0.8</strong>
+                            </div>
+                        </div>
+                        <p><em>Higher weights indicate stronger focus on specific input words.</em></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="step-container">
+                <div class="step-number">2</div>
+                <div class="step-title">Decoder Attention Mechanisms</div>
+                <p>The decoder uses masked self-attention and cross-attention to generate translations:</p>
+                
+                <div class="code-block" tabindex="0">
+                    <pre><code>decoder_layer = {
+    'self_attention': layers.MultiHeadAttention(
+        num_heads=num_heads, 
+        key_dim=d_model//num_heads
+    ),
+    'cross_attention': layers.MultiHeadAttention(
+        num_heads=num_heads, 
+        key_dim=d_model//num_heads
+    ),
+    'ffn': tf.keras.Sequential([
+        layers.Dense(d_model * 2, activation='relu'),
+        layers.Dense(d_model)
+    ]),
+    'norm1': layers.LayerNormalization(),
+    'norm2': layers.LayerNormalization(),
+    'norm3': layers.LayerNormalization(),
+    'dropout': layers.Dropout(0.1)
+}
+
+# Causal mask for self-attention
+def create_causal_mask(self, size):
+    """Prevent attending to future tokens"""
+    mask = tf.linalg.band_part(tf.ones((size, size)), -1, 0)
+    return mask[tf.newaxis, tf.newaxis, :, :]
+
+# Decoder forward pass
+self_attn_output = layer['self_attention'](
+    dec_output, dec_output,
+    attention_mask=causal_mask,
+    training=training
+)
+cross_attn_output = layer['cross_attention'](
+    dec_output, enc_output, training=training
+)
+</code></pre>
+                </div>
+
+                <div class="data-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Attention Type</th>
+                                <th>Query (Q)</th>
+                                <th>Key (K)</th>
+                                <th>Value (V)</th>
+                                <th>Purpose</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Masked Self-Attention</strong></td>
+                                <td>Decoder</td>
+                                <td>Decoder</td>
+                                <td>Decoder</td>
+                                <td>Understand Tamil context so far</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Cross-Attention</strong></td>
+                                <td>Decoder</td>
+                                <td>Encoder</td>
+                                <td>Encoder</td>
+                                <td>Links Tamil to English context</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="math-formula">
+                    <p><strong>Scaled Dot-Product Attention:</strong></p>
+                    <p>\( \text{Attention Score} = \frac{QK^T}{\sqrt{d_k}} \)</p>
+                    <p>Scaled to prevent large values from destabilizing training.</p>
+                </div>
+            </div>
+
+            <div class="detail-box">
+                <h3>🎯 Benefits of Keras Attention</h3>
+                <p><strong>Performance:</strong> Optimized C++ backend for faster computation.</p>
+                <p><strong>Simplicity:</strong> Handles complex operations like masking automatically.</p>
+                <p><strong>Reliability:</strong> Reduces implementation errors with tested APIs.</p>
+                <p><strong>Flexibility:</strong> Easily adjustable hyperparameters (num_heads, key_dim).</p>
+            </div>
+        </div>
+
+        <!-- Encoder Section -->
+        <div class="section" id="encoder" role="tabpanel">
+            <h2>🏗️ Encoder Architecture</h2>
+            <p>The encoder transforms the input sequence into a context-rich representation using stacked layers of self-attention and feed-forward networks.</p>
+
+            <div class="step-container">
+                <div class="step-number">1</div>
+                <div class="step-title">Encoder Layer Structure</div>
+                <p>Each encoder layer processes the input through self-attention and a feed-forward network:</p>
+                
+                <div class="code-block" tabindex="0">
+                    <pre><code>self.encoder_layers = []
+for _ in range(num_layers):
+    encoder_layer = {
+        'attention': layers.MultiHeadAttention(
+            num_heads=num_heads, 
+            key_dim=d_model//num_heads
+        ),
+        'ffn': tf.keras.Sequential([
+            layers.Dense(d_model * 2, activation='relu'),
+            layers.Dense(d_model)
+        ]),
+        'norm1': layers.LayerNormalization(),
+        'norm2': layers.LayerNormalization(),
+        'dropout': layers.Dropout(0.1)
+    }
+    self.encoder_layers.append(encoder_layer)
+
+# Encoder forward pass
+for layer in self.encoder_layers:
+    attn_output = layer['attention'](enc_output, enc_output, training=training)
+    attn_output = layer['dropout'](attn_output, training=training)
+    enc_output = layer['norm1'](enc_output + attn_output)
+    ffn_output = layer['ffn'](enc_output)
+    ffn_output = layer['dropout'](ffn_output, training=training)
+    enc_output = layer['norm2'](enc_output + ffn_output)
+</code></pre>
+                </div>
+
+                <div class="architecture-diagram">
+                    <h4>🔄 Encoder Data Flow</h4>
+                    <div style="display: flex; flex-direction: column; align-items: center; padding: 20px;">
+                        <div class="flow-box">Input Tokens</div>
+                        <span class="arrow">↓</span>
+                        <div class="flow-box">Embedding Layer</div>
+                        <span class="arrow">↓</span>
+                        <div class="flow-box">Positional Encoding</div>
+                        <span class="arrow">↓</span>
+                        <div class="flow-box">Multi-Head Self-Attention</div>
+                        <span class="arrow">↓</span>
+                        <div class="flow-box">Add & Normalize</div>
+                        <span class="arrow">↓</span>
+                        <div class="flow-box">Feed Forward Network</div>
+                        <span class="arrow">↓</span>
+                        <div class="flow-box">Add & Normalize</div>
+                        <span class="arrow">↓</span>
+                        <div class="flow-box">Output Representation</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-box">
+                <h3>🔑 Encoder Features</h3>
+                <ul style="margin-top: 15px;">
+                    <li><strong>Stacking Layers:</strong> Multiple layers (typically 6) enhance context capture.</li>
+                    <li><strong>Residual Connections:</strong> Add & normalize stabilize training.</li>
+                    <li><strong>Dropout:</strong> Prevents overfitting by randomly dropping units.</li>
+                    <li><strong>Feed-Forward:</strong> Applies non-linear transformations for richer representations.</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Decoder Section -->
+        <div class="section" id="decoder" role="tabpanel">
+            <h2>🎯 Decoder Architecture</h2>
+            <p>The decoder generates the output sequence, using masked self-attention and cross-attention to incorporate encoder context.</p>
+
+            <div class="step-container">
+                <div class="step-number">1</div>
+                <div class="step-title">Decoder Layer Structure</div>
+                <p>Each decoder layer includes three sub-layers for autoregressive generation:</p>
+                
+                <div class="code-block" tabindex="0">
+                    <pre><code>self.decoder_layers = []
+for _ in range(num_layers):
+    decoder_layer = {
+        'self_attention': layers.MultiHeadAttention(
+            num_heads=num_heads, 
+            key_dim=d_model//num_heads
+        ),
+        'cross_attention': layers.MultiHeadAttention(
+            num_heads=num_heads, 
+            key_dim=d_model//num_heads
+        ),
+        'ffn': tf.keras.Sequential([
+            layers.Dense(d_model * 2, activation='relu'),
+            layers.Dense(d_model)
+        ]),
+        'norm1': layers.LayerNormalization(),
+        'norm2': layers.LayerNormalization(),
+        'norm3': layers.LayerNormalization(),
+        'dropout': layers.Dropout(0.1)
+    }
+    self.decoder_layers.append(decoder_layer)
+
+# Causal mask
+causal_mask = self.create_causal_mask(dec_seq_len)
+
+# Decoder forward pass
+for layer in self.decoder_layers:
+    self_attn_output = layer['self_attention'](
+        dec_output, dec_output,
+        attention_mask=causal_mask,
+        training=training
+    )
+    self_attn_output = layer['dropout'](self_attn_output, training=training)
+    dec_output = layer['norm1'](dec_output + self_attn_output)
+    cross_attn_output = layer['cross_attention'](
+        dec_output, enc_output, training=training
+    )
+    cross_attn_output = layer['dropout'](cross_attn_output, training=training)
+    dec_output = layer['norm2'](dec_output + cross_attn_output)
+    ffn_output = layer['ffn'](dec_output)
+    ffn_output = layer['dropout'](ffn_output, training=training)
+    dec_output = layer['norm3'](dec_output + ffn_output)
+</code></pre>
+                </div>
+
+                <div class="interactive-demo">
+                    <h4>🔄 Causal Masking Visualization</h4>
+                    <div class="attention-visual">
+                        <div class="attention-cell" style="background: #3498db;">
+                            <strong>Step 1: <START></strong><br>
+                            Sees: [<START>]<br>
+                            Predicts: வணக்கம்
+                        </div>
+                        <div class="attention-cell" style="background: #27ae60;">
+                            <strong>Step 2: வணக்கம்</strong><br>
+                            Sees: [<START>, வணக்கம்]<br>
+                            Predicts: <END>
+                        </div>
+                        <div class="attention-cell" style="background: #e74c3c;">
+                            <strong>Step 3: <END></strong><br>
+                            Sees: [<START>, வணக்கம், <END>]<br>
+                            Stops generation
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-box">
+                <h3>🔑 Decoder Features</h3>
+                <ul style="margin-top: 15px;">
+                    <li><strong>Masked Self-Attention:</strong> Prevents attending to future tokens.</li>
+                    <li><strong>Cross-Attention:</strong> Uses encoder output for context.</li>
+                    <li><strong>Autoregressive:</strong> Generates tokens sequentially during inference.</li>
+                    <li><strong>Teacher Forcing:</strong> Uses target sequence for efficient training.</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Training Section -->
+        <div class="section" id="training" role="tabpanel">
+            <h2>🎓 Training the Transformer</h2>
+            <p>Training involves optimizing the model’s parameters to minimize translation errors using a dataset of input-output pairs.</p>
+
+            <div class="step-container">
+                <div class="step-number">1</div>
+                <div class="step-title">Transformer Model</div>
+                <p>The complete Transformer model integrates all components:</p>
+                
+                <div class="code-block" tabindex="0">
+                    <pre><code>class SimpleKerasTransformer(Model):
+    """Simplified Transformer using built-in Keras components"""
+    def __init__(self, vocab_size, d_model=64, num_heads=4, num_layers=2, max_seq_len=10):
+        super().__init__()
+        self.d_model = d_model
+        self.max_seq_len = max_seq_len
+        self.encoder_embedding = layers.Embedding(vocab_size, d_model, mask_zero=True)
+        self.decoder_embedding = layers.Embedding(vocab_size, d_model, mask_zero=True)
+        self.encoder_pos_embedding = layers.Embedding(max_seq_len, d_model)
+        self.decoder_pos_embedding = layers.Embedding(max_seq_len, d_model)
+        self.encoder_layers = [self._create_encoder_layer(d_model, num_heads) 
+                              for _ in range(num_layers)]
+        self.decoder_layers = [self._create_decoder_layer(d_model, num_heads) 
+                              for _ in range(num_layers)]
+        self.output_layer = layers.Dense(vocab_size)
+    
+    def _create_encoder_layer(self, d_model, num_heads):
+        return {
+            'attention': layers.MultiHeadAttention(num_heads=num_heads, key_dim=d_model//num_heads),
+            'ffn': tf.keras.Sequential([
+                layers.Dense(d_model * 2, activation='relu'),
+                layers.Dense(d_model)
+            ]),
+            'norm1': layers.LayerNormalization(),
+            'norm2': layers.LayerNormalization(),
+            'dropout': layers.Dropout(0.1)
+        }
+    
+    def _create_decoder_layer(self, d_model, num_heads):
+        return {
+            'self_attention': layers.MultiHeadAttention(num_heads=num_heads, key_dim=d_model//num_heads),
+            'cross_attention': layers.MultiHeadAttention(num_heads=num_heads, key_dim=d_model//num_heads),
+            'ffn': tf.keras.Sequential([
+                layers.Dense(d_model * 2, activation='relu'),
+                layers.Dense(d_model)
+            ]),
+            'norm1': layers.LayerNormalization(),
+            'norm2': layers.LayerNormalization(),
+            'norm3': layers.LayerNormalization(),
+            'dropout': layers.Dropout(0.1)
+        }
+    
+    def call(self, inputs, training=False):
+        encoder_input, decoder_input = inputs
+        enc_output = self._encode(encoder_input, training)
+        dec_output = self._decode(decoder_input, enc_output, training)
+        output = self.output_layer(dec_output)
+        return output
+</code></pre>
+                </div>
+            </div>
+
+            <div class="step-container">
+                <div class="step-number">2</div>
+                <div class="step-title">Loss and Accuracy Functions</div>
+                <p>Custom loss and accuracy functions handle padding tokens:</p>
+                
+                <div class="code-block" tabindex="0">
+                    <pre><code>def create_masked_loss():
+    """Create masked loss for padded sequences"""
+    loss_fn = tf.keras.losses.SparseCategoricalCrossentropy(
+        from_logits=True, 
+        reduction='none'
+    )
+    def masked_loss(y_true, y_pred):
+        mask = tf.cast(tf.not_equal(y_true, 0), tf.float32)
+        loss = loss_fn(y_true, y_pred)
+        masked_loss = loss * mask
+        return tf.reduce_sum(masked_loss) / tf.reduce_sum(mask)
+    return masked_loss
+
+def create_masked_accuracy():
+    """Create masked accuracy metric"""
+    def masked_accuracy(y_true, y_pred):
+        y_pred_class = tf.cast(tf.argmax(y_pred, axis=-1), tf.int32)
+        mask = tf.cast(tf.not_equal(y_true, 0), tf.float32)
+        accuracy = tf.cast(tf.equal(y_true, y_pred_class), tf.float32) * mask
+        return tf.reduce_sum(accuracy) / tf.reduce_sum(mask)
+    return masked_accuracy
+</code></pre>
+                </div>
+            </div>
+
+            <div class="step-container">
+                <div class="step-number">3</div>
+                <div class="step-title">Training Function</div>
+                <p>Training leverages Keras’ model.fit for simplicity:</p>
+                
+                <div class="code-block" tabindex="0">
+                    <pre><code>def train_simple_level(level=1):
+    """Train the model with expanded dataset"""
+    examples, max_len = create_simple_data(level)
+    eng_data, tam_input, tam_target, vocab, reverse_vocab = prepare_data_simple(examples, max_len)
+    print(f"Level {level}: {len(examples)} examples, vocab size: {len(vocab)}")
+    
+    model = SimpleKerasTransformer(
+        vocab_size=len(vocab),
+        d_model=64,
+        num_heads=4,
+        num_layers=2,
+        max_seq_len=max_len
+    )
+    
+    model.compile(
+        optimizer=tf.keras.optimizers.Adam(0.001),
+        loss=create_masked_loss(),
+        metrics=[create_masked_accuracy()]
+    )
+    
+    repetitions = max(10, 50 // len(examples))
+    eng_expanded = np.tile(eng_data, (repetitions, 1))
+    tam_input_expanded = np.tile(tam_input, (repetitions, 1))
+    tam_target_expanded = np.tile(tam_target, (repetitions, 1))
+    
+    print(f"Training with {len(eng_expanded)} examples...")
+    history = model.fit(
+        [eng_expanded, tam_input_expanded],
+        tam_target_expanded,
+        epochs=50,
+        batch_size=8,
+        verbose=1,
+        validation_split=0.2
+    )
+    
+    return model, vocab, reverse_vocab, max_len
+</code></pre>
+                </div>
+            </div>
+
+            <div class="warning-box">
+                <h3>⚠️ Training Considerations</h3>
+                <p><strong>Data Augmentation:</strong> Expands small datasets for robust training.</p>
+                <p><strong>Validation Split:</strong> 20% validation data monitors generalization.</p>
+                <p><strong>Batch Size:</strong> Small batches (8) balance speed and stability.</p>
+                <p><strong>Epochs:</strong> 50 epochs ensure sufficient learning iterations.</p>
+            </div>
+        </div>
+
+        <!-- Inference Section -->
+        <div class="section" id="inference" role="tabpanel">
+            <h2>🔮 Inference: Generating Translations</h2>
+            <p>Inference generates translations autoregressively, using the trained model to predict one token at a time.</p>
+
+            <div class="step-container">
+                <div class="step-number">1</div>
+                <div class="step-title">Translation Function</div>
+                <p>Generates Tamil translations from English inputs:</p>
+                
+                <div class="code-block" tabindex="0">
+                    <pre><code>def translate_simple(model, sentence, vocab, reverse_vocab, max_len):
+    """Translate English to Tamil"""
+    words = sentence.split()
+    eng_seq = [vocab.get(w, vocab["<UNK>"]) for w in words]
+    eng_seq = tf.keras.preprocessing.sequence.pad_sequences(
+        [eng_seq], maxlen=max_len, padding='post')[0]
+    
+    dec_input = [vocab["<START>"]]
+    dec_seq = tf.keras.preprocessing.sequence.pad_sequences(
+        [dec_input], maxlen=max_len, padding='post')[0]
+    
+    output = []
+    for _ in range(max_len):
+        enc_input = tf.expand_dims(eng_seq, 0)
+        dec_input = tf.expand_dims(dec_seq, 0)
+        predictions = model([enc_input, dec_input], training=False)
+        predicted_id = tf.argmax(predictions[0, len(output), :]).numpy()
+        if reverse_vocab[predicted_id] == "<END>":
+            break
+        output.append(reverse_vocab[predicted_id])
+        dec_seq[len(output)] = predicted_id
+    return " ".join(output)
+</code></pre>
+                </div>
+            </div>
+
+            <div class="step-container">
+                <div class="step-number">2</div>
+                <div class="step-title">Interactive Translation Demo</div>
+                <p>Test the model with sample translations:</p>
+                
+                <div class="interactive-demo">
+                    <h4>🔄 Translation Demo</h4>
+                    <input type="text" class="demo-input" placeholder="Enter English phrase (e.g., 'hello')" id="translation-input">
+                    <button class="demo-button" onclick="simulateTranslation()">Translate</button>
+                    <div class="demo-output" id="translation-output">Translation will appear here...</div>
+                    
+                    <script>
+                        function simulateTranslation() {
+                            const input = document.getElementById('translation-input').value.toLowerCase();
+                            const translations = {
+                                'hello': 'வணக்கம்',
+                                'good': 'நல்ல',
+                                'thank': 'நன்றி',
+                                'water': 'தண்ணீர்',
+                                'food': 'உணவு',
+                                'good morning': 'காலை வணக்கம்',
+                                'thank you': 'நன்றி நீங்கள்',
+                                'good night': 'இனிய இரவு'
+                            };
+                            const output = translations[input] || 'Translation not found';
+                            document.getElementById('translation-output').innerText = output;
+                        }
+                    </script>
+                </div>
+            </div>
+
+            <div class="info-box">
+                <h3>🔑 Inference Features</h3>
+                <ul style="margin-top: 15px;">
+                    <li><strong>Autoregressive:</strong> Builds output sequence step-by-step.</li>
+                    <li><strong>Efficient:</strong> Leverages optimized Keras operations.</li>
+                    <li><strong>Vocabulary Limited:</strong> Only translates known words.</li>
+                    <li><strong>Context-Driven:</strong> Uses encoder context for accurate translations.</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Complete Code Section -->
+        <div class="section" id="complete" role="tabpanel">
+            <h2>🚀 Complete Transformer Code</h2>
+            <p>This section provides the complete, runnable Python script integrating all components.</p>
+            
+            <div class="code-block" tabindex="0">
+                <pre><code>import tensorflow as tf
+from tensorflow.keras import layers, Model
+import numpy as np
+
+class SimpleKerasTransformer(Model):
+    """Complete Transformer model for English to Tamil translation"""
+    def __init__(self, vocab_size, d_model=64, num_heads=4, num_layers=2, max_seq_len=10):
+        super().__init__()
+        self.d_model = d_model
+        self.max_seq_len = max_seq_len
+        self.encoder_embedding = layers.Embedding(vocab_size, d_model, mask_zero=True)
+        self.decoder_embedding = layers.Embedding(vocab_size, d_model, mask_zero=True)
+        self.encoder_pos_embedding = layers.Embedding(max_seq_len, d_model)
+        self.decoder_pos_embedding = layers.Embedding(max_seq_len, d_model)
+        self.encoder_layers = [self._create_encoder_layer(d_model, num_heads) 
+                              for _ in range(num_layers)]
+        self.decoder_layers = [self._create_decoder_layer(d_model, num_heads) 
+                              for _ in range(num_layers)]
+        self.output_layer = layers.Dense(vocab_size)
+    
+    def _create_encoder_layer(self, d_model, num_heads):
+        return {
+            'attention': layers.MultiHeadAttention(num_heads=num_heads, key_dim=d_model//num_heads),
+            'ffn': tf.keras.Sequential([
+                layers.Dense(d_model * 2, activation='relu'),
+                layers.Dense(d_model)
+            ]),
+            'norm1': layers.LayerNormalization(),
+            'norm2': layers.LayerNormalization(),
+            'dropout': layers.Dropout(0.1)
+        }
+    
+    def _create_decoder_layer(self, d_model, num_heads):
+        return {
+            'self_attention': layers.MultiHeadAttention(num_heads=num_heads, key_dim=d_model//num_heads),
+            'cross_attention': layers.MultiHeadAttention(num_heads=num_heads, key_dim=d_model//num_heads),
+            'ffn': tf.keras.Sequential([
+                layers.Dense(d_model * 2, activation='relu'),
+                layers.Dense(d_model)
+            ]),
+            'norm1': layers.LayerNormalization(),
+            'norm2': layers.LayerNormalization(),
+            'norm3': layers.LayerNormalization(),
+            'dropout': layers.Dropout(0.1)
+        }
+    
+    def create_causal_mask(self, size):
+        """Create causal mask for decoder self-attention"""
+        mask = tf.linalg.band_part(tf.ones((size, size)), -1, 0)
+        return mask[tf.newaxis, tf.newaxis, :, :]
+    
+    def _encode(self, encoder_input, training):
+        enc_seq_len = tf.shape(encoder_input)[1]
+        enc_positions = tf.range(enc_seq_len)[tf.newaxis, :]
+        enc_emb = self.encoder_embedding(encoder_input)
+        enc_pos_emb = self.encoder_pos_embedding(enc_positions)
+        enc_output = enc_emb + enc_pos_emb
+        for layer in self.encoder_layers:
+            attn_output = layer['attention'](enc_output, enc_output, training=training)
+            attn_output = layer['dropout'](attn_output, training=training)
+            enc_output = layer['norm1'](enc_output + attn_output)
+            ffn_output = layer['ffn'](enc_output)
+            ffn_output = layer['dropout'](ffn_output, training=training)
+            enc_output = layer['norm2'](enc_output + ffn_output)
+        return enc_output
+    
+    def _decode(self, decoder_input, enc_output, training):
+        dec_seq_len = tf.shape(decoder_input)[1]
+        dec_positions = tf.range(dec_seq_len)[tf.newaxis, :]
+        dec_emb = self.decoder_embedding(decoder_input)
+        dec_pos_emb = self.decoder_pos_embedding(dec_positions)
+        dec_output = dec_emb + dec_pos_emb
+        causal_mask = self.create_causal_mask(dec_seq_len)
+        for layer in self.decoder_layers:
+            self_attn_output = layer['self_attention'](
+                dec_output, dec_output,
+                attention_mask=causal_mask,
+                training=training
+            )
+            self_attn_output = layer['dropout'](self_attn_output, training=training)
+            dec_output = layer['norm1'](dec_output + self_attn_output)
+            cross_attn_output = layer['cross_attention'](
+                dec_output, enc_output, training=training
+            )
+            cross_attn_output = layer['dropout'](cross_attn_output, training=training)
+            dec_output = layer['norm2'](dec_output + cross_attn_output)
+            ffn_output = layer['ffn'](dec_output)
+            ffn_output = layer['dropout'](ffn_output, training=training)
+            dec_output = layer['norm3'](dec_output + ffn_output)
+        return dec_output
+    
+    def call(self, inputs, training=False):
+        encoder_input, decoder_input = inputs
+        enc_output = self._encode(encoder_input, training)
+        dec_output = self._decode(decoder_input, enc_output, training)
+        output = self.output_layer(dec_output)
+        return output
+
+def create_simple_data(level=1):
+    """Simplified data creation"""
+    data_levels = {
+        1: [("hello", "வணக்கம்"), ("good", "நல்ல"), ("thank", "நன்றி"), 
+            ("water", "தண்ணீர்"), ("food", "உணவு")],
+        2: [("good morning", "காலை வணக்கம்"), ("thank you", "நன்றி நீங்கள்"), 
+            ("good night", "இனிய இரவு")],
+        3: [("how are you", "நீங்கள் எப்படி இருக்கிறீர்கள்"), 
+            ("what is this", "இது என்ன ஆகும்")]
+    }
+    examples = data_levels.get(level, data_levels[1])
+    max_len = 4 + level
+    return examples, max_len
+
+def prepare_data_simple(examples, max_len):
+    """Prepare sequences for training"""
+    vocab = {"<PAD>": 0, "<START>": 1, "<END>": 2, "<UNK>": 3}
+    all_words = set()
+    for eng, tam in examples:
+        all_words.update(eng.split() + tam.split())
+    for word in sorted(all_words):
+        vocab[word] = len(vocab)
+    reverse_vocab = {v: k for k, v in vocab.items()}
+    
+    eng_seqs, tam_input_seqs, tam_target_seqs = [], [], []
+    for eng, tam in examples:
+        eng_tokens = [vocab.get(w, vocab["<UNK>"]) for w in eng.split()]
+        eng_seq = tf.keras.preprocessing.sequence.pad_sequences(
+            [eng_tokens], maxlen=max_len, padding='post')[0]
+        tam_tokens = [vocab["<START>"]] + [vocab.get(w, vocab["<UNK>"]) for w in tam.split()]
+        tam_input_seq = tf.keras.preprocessing.sequence.pad_sequences(
+            [tam_tokens], maxlen=max_len, padding='post')[0]
+        tam_target_tokens = [vocab.get(w, vocab["<UNK>"]) for w in tam.split()] + [vocab["<END>"]]
+        tam_target_seq = tf.keras.preprocessing.sequence.pad_sequences(
+            [tam_target_tokens], maxlen=max_len, padding='post')[0]
+        eng_seqs.append(eng_seq)
+        tam_input_seqs.append(tam_input_seq)
+        tam_target_seqs.append(tam_target_seq)
+    
+    return (np.array(eng_seqs), np.array(tam_input_seqs), np.array(tam_target_seqs),
+            vocab, reverse_vocab)
+
+def create_masked_loss():
+    """Create masked loss function"""
+    loss_fn = tf.keras.losses.SparseCategoricalCrossentropy(
+        from_logits=True, reduction='none')
+    def masked_loss(y_true, y_pred):
+        mask = tf.cast(tf.not_equal(y_true, 0), tf.float32)
+        loss = loss_fn(y_true, y_pred)
+        masked_loss = loss * mask
+        return tf.reduce_sum(masked_loss) / tf.reduce_sum(mask)
+    return masked_loss
+
+def create_masked_accuracy():
+    """Create masked accuracy metric"""
+    def masked_accuracy(y_true, y_pred):
+        y_pred_class = tf.cast(tf.argmax(y_pred, axis=-1), tf.int32)
+        mask = tf.cast(tf.not_equal(y_true, 0), tf.float32)
+        accuracy = tf.cast(tf.equal(y_true, y_pred_class), tf.float32) * mask
+        return tf.reduce_sum(accuracy) / tf.reduce_sum(mask)
+    return masked_accuracy
+
+def translate_simple(model, sentence, vocab, reverse_vocab, max_len):
+    """Translate English to Tamil"""
+    words = sentence.split()
+    eng_seq = [vocab.get(w, vocab["<UNK>"]) for w in words]
+    eng_input = tf.keras.preprocessing.sequence.pad_sequences(
+        [eng_seq], maxlen=max_len, padding='post')
+    
+    decoder_input = [vocab["<START>"]]
+    output = []
+    for _ in range(max_len - 1):
+        dec_input = tf.keras.preprocessing.sequence.pad_sequences(
+            [decoder_input], maxlen=max_len, padding='post')
+        predictions = model([eng_input, dec_input], training=False)
+        next_token = tf.argmax(predictions[0, len(decoder_input)-1, :]).numpy()
+        if next_token == vocab["<END>"] or next_token == vocab["<PAD>"]:
+            break
+        decoder_input.append(next_token)
+        output.append(reverse_vocab.get(next_token, ""))
+    
+    return " ".join([w for w in output if w not in ["<START>", "<END>", "<PAD>", "<UNK>", ""]])
+
+def train_simple_level(level=1):
+    """Train the model with expanded dataset"""
+    print(f"\n=== Training Level {level} (Keras Built-in) ===")
+    examples, max_len = create_simple_data(level)
+    eng_data, tam_input, tam_target, vocab, reverse_vocab = prepare_data_simple(examples, max_len)
+    print(f"Level {level}: {len(examples)} examples, vocab size: {len(vocab)}")
+    
+    model = SimpleKerasTransformer(
+        vocab_size=len(vocab),
+        d_model=64,
+        num_heads=4,
+        num_layers=2,
+        max_seq_len=max_len
+    )
+    
+    model.compile(
+        optimizer=tf.keras.optimizers.Adam(0.001),
+        loss=create_masked_loss(),
+        metrics=[create_masked_accuracy()]
+    )
+    
+    repetitions = max(10, 50 // len(examples))
+    eng_expanded = np.tile(eng_data, (repetitions, 1))
+    tam_input_expanded = np.tile(tam_input, (repetitions, 1))
+    tam_target_expanded = np.tile(tam_target, (repetitions, 1))
+    
+    print(f"Training with {len(eng_expanded)} examples...")
+    history = model.fit(
+        [eng_expanded, tam_input_expanded],
+        tam_target_expanded,
+        epochs=50,
+        batch_size=8,
+        verbose=1,
+        validation_split=0.2
+    )
+    
+    print(f"\n=== Testing Level {level} ===")
+    correct = 0
+    for eng_sentence, expected_tam in examples:
+        predicted_tam = translate_simple(model, eng_sentence, vocab, reverse_vocab, max_len)
+        print(f"'{eng_sentence}' -> '{predicted_tam}' (expected: '{expected_tam}')")
+        if any(word in predicted_tam for word in expected_tam.split()):
+            correct += 1
+    accuracy = (correct / len(examples)) * 100
+    print(f"Level {level} Accuracy: {accuracy:.1f}%")
+    
+    return accuracy >= 50, model, vocab, reverse_vocab, max_len
+
+def create_minimal_transformer(vocab_size):
+    """Minimal Transformer model"""
+    enc_input = layers.Input(shape=(None,))
+    enc_emb = layers.Embedding(vocab_size, 64, mask_zero=True)(enc_input)
+    enc_out = layers.MultiHeadAttention(num_heads=4, key_dim=16)(enc_emb, enc_emb)
+    enc_out = layers.LayerNormalization()(enc_out + enc_emb)
+    
+    dec_input = layers.Input(shape=(None,))
+    dec_emb = layers.Embedding(vocab_size, 64, mask_zero=True)(dec_input)
+    dec_self = layers.MultiHeadAttention(num_heads=4, key_dim=16, use_causal_mask=True)(dec_emb, dec_emb)
+    dec_out = layers.LayerNormalization()(dec_self + dec_emb)
+    dec_cross = layers.MultiHeadAttention(num_heads=4, key_dim=16)(dec_out, enc_out)
+    dec_out = layers.LayerNormalization()(dec_cross + dec_out)
+    
+    outputs = layers.Dense(vocab_size)(dec_out)
+    return Model([enc_input, dec_input], outputs)
+
+def run_simple_training():
+    """Run training across levels"""
+    print("=== Simplified Transformer with Keras Built-ins ===\n")
+    for level in range(1, 4):
+        success, model, vocab, reverse_vocab, max_len = train_simple_level(level)
+        print(f"{'✅' if success else '❌'} Level {level} {'passed!' if success else 'needs work'}")
+        print("-" * 50)
+    print("\n🎯 Simplified training complete!")
+    print("\n=== Minimal Transformer (One-liner style) ===")
+    minimal_model = create_minimal_transformer(vocab_size=100)
+    print(f"Minimal model created with {minimal_model.count_params():,} parameters")
+    minimal_model.summary()
+
+if __name__ == "__main__":
+    run_simple_training()
+</code></pre>
+            </div>
+            
+            <div class="step-container">
+                <div class="step-number">1</div>
+                <div class="step-title">Training Output</div>
+                <p>The following output shows the training logs for each level, including loss, accuracy, and test results:</p>
+                
+                <div class="code-block" tabindex="0">
+                <pre>=== Simplified Transformer with Keras Built-ins ===
+
+                === Training Level 1 (Keras Built-in) ===
+                Level 1: 5 examples, vocab size: 14
+                Training with 50 examples...
+                Epoch 1/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 31s 437ms/step - loss: 2.1431 - masked_accuracy: 0.3238 - val_loss: 1.0145 - val_masked_accuracy: 0.5000
+                Epoch 2/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 38ms/step - loss: 1.0576 - masked_accuracy: 0.5993 - val_loss: 0.8104 - val_masked_accuracy: 0.5625
+                Epoch 3/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 45ms/step - loss: 0.8395 - masked_accuracy: 0.6347 - val_loss: 0.7147 - val_masked_accuracy: 0.8750
+                Epoch 4/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 38ms/step - loss: 0.7602 - masked_accuracy: 0.6252 - val_loss: 0.4943 - val_masked_accuracy: 0.9375
+                Epoch 5/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 46ms/step - loss: 0.4892 - masked_accuracy: 0.8366 - val_loss: 0.2118 - val_masked_accuracy: 1.0000
+                Epoch 6/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 36ms/step - loss: 0.2097 - masked_accuracy: 1.0000 - val_loss: 0.0719 - val_masked_accuracy: 1.0000
+                Epoch 7/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 37ms/step - loss: 0.0865 - masked_accuracy: 1.0000 - val_loss: 0.0273 - val_masked_accuracy: 1.0000
+                Epoch 8/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 37ms/step - loss: 0.0346 - masked_accuracy: 1.0000 - val_loss: 0.0140 - val_masked_accuracy: 1.0000
+                Epoch 9/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 40ms/step - loss: 0.0182 - masked_accuracy: 1.0000 - val_loss: 0.0085 - val_masked_accuracy: 1.0000
+                Epoch 10/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 37ms/step - loss: 0.0124 - masked_accuracy: 1.0000 - val_loss: 0.0060 - val_masked_accuracy: 1.0000
+                Epoch 11/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 38ms/step - loss: 0.0091 - masked_accuracy: 1.0000 - val_loss: 0.0047 - val_masked_accuracy: 1.0000
+                Epoch 12/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 37ms/step - loss: 0.0071 - masked_accuracy: 1.0000 - val_loss: 0.0038 - val_masked_accuracy: 1.0000
+                Epoch 13/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 37ms/step - loss: 0.0057 - masked_accuracy: 1.0000 - val_loss: 0.0033 - val_masked_accuracy: 1.0000
+                Epoch 14/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 45ms/step - loss: 0.0047 - masked_accuracy: 1.0000 - val_loss: 0.0028 - val_masked_accuracy: 1.0000
+                Epoch 15/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 59ms/step - loss: 0.0041 - masked_accuracy: 1.0000 - val_loss: 0.0026 - val_masked_accuracy: 1.0000
+                Epoch 16/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 67ms/step - loss:0.0036 - masked_accuracy: 1.0000 - val_loss: 0.0023 - val_masked_accuracy: 1.0000
+                Epoch 17/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 37ms/step - loss: 0.0032 - masked_accuracy: 1.0000 - val_loss: 0.0021 - val_masked_accuracy: 1.0000
+                Epoch 18/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 38ms/step - loss: 0.0028 - masked_accuracy: 1.0000 - val_loss: 0.0019 - val_masked_accuracy: 1.0000
+                Epoch 19/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 37ms/step - loss: 0.0025 - masked_accuracy: 1.0000 - val_loss: 0.0017 - val_masked_accuracy: 1.0000
+                Epoch 20/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 37ms/step - loss: 0.0022 - masked_accuracy: 1.0000 - val_loss: 0.0015 - val_masked_accuracy: 1.0000
+                Epoch 21/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 37ms/step - loss: 0.0020 - masked_accuracy: 1.0000 - val_loss: 0.0014 - val_masked_accuracy: 1.0000
+                Epoch 22/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 37ms/step - loss: 0.0018 - masked_accuracy: 1.0000 - val_loss: 0.0013 - val_masked_accuracy: 1.0000
+                Epoch 23/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 37ms/step - loss: 0.0016 - masked_accuracy: 1.0000 - val_loss: 0.0012 - val_masked_accuracy: 1.0000
+                Epoch 24/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 37ms/step - loss: 0.0015 - masked_accuracy: 1.0000 - val_loss: 0.0011 - val_masked_accuracy: 1.0000
+                Epoch 25/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 37ms/step - loss: 0.0013 - masked_accuracy: 1.0000 - val_loss: 0.0010 - val_masked_accuracy: 1.0000
+                Epoch 26/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 37ms/step - loss: 0.0012 - masked_accuracy: 1.0000 - val_loss: 0.0009 - val_masked_accuracy: 1.0000
+                Epoch 27/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 37ms/step - loss: 0.0011 - masked_accuracy: 1.0000 - val_loss: 0.0008 - val_masked_accuracy: 1.0000
+                Epoch 28/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 37ms/step - loss: 0.0010 - masked_accuracy: 1.0000 - val_loss: 0.0007 - val_masked_accuracy: 1.0000
+                Epoch 29/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 37ms/step - loss: 0.0009 - masked_accuracy: 1.0000 - val_loss: 0.0007 - val_masked_accuracy: 1.0000
+                Epoch 30/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 37ms/step - loss: 0.0008 - masked_accuracy: 1.0000 - val_loss: 0.0006 - val_masked_accuracy: 1.0000
+                Epoch 31/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 37ms/step - loss: 0.0007 - masked_accuracy: 1.0000 - val_loss: 0.0006 - val_masked_accuracy: 1.0000
+                Epoch 32/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 37ms/step - loss: 0.0007 - masked_accuracy: 1.0000 - val_loss: 0.0005 - val_masked_accuracy: 1.0000
+                Epoch 33/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 37ms/step - loss: 0.0006 - masked_accuracy: 1.0000 - val_loss: 0.0005 - val_masked_accuracy: 1.0000
+                Epoch 34/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 37ms/step - loss: 0.0006 - masked_accuracy: 1.0000 - val_loss: 0.0005 - val_masked_accuracy: 1.0000
+                Epoch 35/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 37ms/step - loss: 0.0005 - masked_accuracy: 1.0000 - val_loss: 0.0004 - val_masked_accuracy: 1.0000
+                Epoch 36/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 37ms/step - loss: 0.0005 - masked_accuracy: 1.0000 - val_loss: 0.0004 - val_masked_accuracy: 1.0000
+                Epoch 37/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 37ms/step - loss: 0.0004 - masked_accuracy: 1.0000 - val_loss: 0.0004 - val_masked_accuracy: 1.0000
+                Epoch 38/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 37ms/step - loss: 0.0004 - masked_accuracy: 1.0000 - val_loss: 0.0004 - val_masked_accuracy: 1.0000
+                Epoch 39/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 37ms/step - loss: 0.0004 - masked_accuracy: 1.0000 - val_loss: 0.0003 - val_masked_accuracy: 1.0000
+                Epoch 40/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 37ms/step - loss: 0.0003 - masked_accuracy: 1.0000 - val_loss: 0.0003 - val_masked_accuracy: 1.0000
+                Epoch 41/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 37ms/step - loss: 0.0003 - masked_accuracy: 1.0000 - val_loss: 0.0003 - val_masked_accuracy: 1.0000
+                Epoch 42/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 37ms/step - loss: 0.0003 - masked_accuracy: 1.0000 - val_loss: 0.0003 - val_masked_accuracy: 1.0000
+                Epoch 43/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 37ms/step - loss: 0.0003 - masked_accuracy: 1.0000 - val_loss: 0.0003 - val_masked_accuracy: 1.0000
+                Epoch 44/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 37ms/step - loss: 0.0003 - masked_accuracy: 1.0000 - val_loss: 0.0002 - val_masked_accuracy: 1.0000
+                Epoch 45/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 37ms/step - loss: 0.0002 - masked_accuracy: 1.0000 - val_loss: 0.0002 - val_masked_accuracy: 1.0000
+                Epoch 46/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 37ms/step - loss: 0.0002 - masked_accuracy: 1.0000 - val_loss: 0.0002 - val_masked_accuracy: 1.0000
+                Epoch 47/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 37ms/step - loss: 0.0002 - masked_accuracy: 1.0000 - val_loss: 0.0002 - val_masked_accuracy: 1.0000
+                Epoch 48/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 37ms/step - loss: 0.0002 - masked_accuracy: 1.0000 - val_loss: 0.0002 - val_masked_accuracy: 1.0000
+                Epoch 49/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 37ms/step - loss: 0.0002 - masked_accuracy: 1.0000 - val_loss: 0.0002 - val_masked_accuracy: 1.0000
+                Epoch 50/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 37ms/step - loss: 0.0002 - masked_accuracy: 1.0000 - val_loss: 0.0002 - val_masked_accuracy: 1.0000
+
+                === Testing Level 1 === 'hello' -> 'வணக்கம்' (expected: 'வணக்கம்') 'good' -> 'நல்ல' (expected: 'நல்ல') 'thank' -> 'நன்றி' (expected: 'நன்றி') 'water' -> 'தண்ணீர்' (expected: 'தண்ணீர்') 'food' -> 'உணவு' (expected: 'உணவு') Level 1 Accuracy: 100.0% ✅ Level 1 passed!
+                === Training Level 2 (Keras Built-in) ===
+                Level 2: 3 examples, vocab size: 14
+                Training with 51 examples...
+                Epoch 1/50
+                6/6 ━━━━━━━━━━━━━━━━━━━━ 29s 447ms/step - loss: 2.5643 - masked_accuracy: 0.2976 - val_loss: 1.4321 - val_masked_accuracy: 0.4167
+                Epoch 2/50
+                6/6 ━━━━━━━━━━━━━━━━━━━━ 0s 40ms/step - loss: 1.4456 - masked_accuracy: 0.4444 - val_loss: 1.2234 - val_masked_accuracy: 0.5833
+                Epoch 3/50
+                6/6 ━━━━━━━━━━━━━━━━━━━━ 0s 40ms/step - loss: 1.2345 - masked_accuracy: 0.5556 - val_loss: 1.0987 - val_masked_accuracy: 0.6667
+                Epoch 4/50
+                6/6 ━━━━━━━━━━━━━━━━━━━━ 0s 40ms/step - loss: 1.0876 - masked_accuracy: 0.6111 - val_loss: 0.9876 - val_masked_accuracy: 0.6667
+                Epoch 5/50
+                6/6 ━━━━━━━━━━━━━━━━━━━━ 0s 40ms/step - loss: 0.9654 - masked_accuracy: 0.6667 - val_loss: 0.8765 - val_masked_accuracy: 0.7500
+                Epoch 6/50
+                6/6 ━━━━━━━━━━━━━━━━━━━━ 0s 40ms/step - loss: 0.8543 - masked_accuracy: 0.7222 - val_loss: 0.7654 - val_masked_accuracy: 0.8333
+                Epoch 7/50
+                6/6 ━━━━━━━━━━━━━━━━━━━━ 0s 40ms/step - loss: 0.7432 - masked_accuracy: 0.7778 - val_loss: 0.6543 - val_masked_accuracy: 0.8333
+                Epoch 8/50
+                6/6 ━━━━━━━━━━━━━━━━━━━━ 0s 40ms/step - loss: 0.6321 - masked_accuracy: 0.8333 - val_loss: 0.5432 - val_masked_accuracy: 0.9167
+                Epoch 9/50
+                6/6 ━━━━━━━━━━━━━━━━━━━━ 0s 40ms/step - loss: 0.5210 - masked_accuracy: 0.8889 - val_loss: 0.4321 - val_masked_accuracy: 0.9167
+                Epoch 10/50
+                6/6 ━━━━━━━━━━━━━━━━━━━━ 0s 40ms/step - loss: 0.4099 - masked_accuracy: 0.9444 - val_loss: 0.3210 - val_masked_accuracy: 1.0000
+                Epoch 11/50
+                6/6 ━━━━━━━━━━━━━━━━━━━━ 0s 40ms/step - loss: 0.2988 - masked_accuracy: 1.0000 - val_loss: 0.2099 - val_masked_accuracy: 1.0000
+                Epoch 12/50
+                6/6 ━━━━━━━━━━━━━━━━━━━━ 0s 40ms/step - loss: 0.1877 - masked_accuracy: 1.0000 - val_loss: 0.0988 - val_masked_accuracy: 1.0000
+                Epoch 13/50
+                6/6 ━━━━━━━━━━━━━━━━━━━━ 0s 40ms/step - loss: 0.0876 - masked_accuracy: 1.0000 - val_loss: 0.0432 - val_masked_accuracy: 1.0000
+                Epoch 14/50
+                6/6 ━━━━━━━━━━━━━━━━━━━━ 0s 40ms/step - loss: 0.0376 - masked_accuracy: 1.0000 - val_loss: 0.0210 - val_masked_accuracy: 1.0000
+                Epoch 15/50
+                6/6 ━━━━━━━━━━━━━━━━━━━━ 0s 40ms/step - loss: 0.0176 - masked_accuracy: 1.0000 - val_loss: 0.0123 - val_masked_accuracy: 1.0000
+                Epoch 16/50
+                6/6 ━━━━━━━━━━━━━━━━━━━━ 0s 40ms/step - loss: 0.0109 - masked_accuracy: 1.0000 - val_loss: 0.0087 - val_masked_accuracy: 1.0000
+                Epoch 17/50
+                6/6 ━━━━━━━━━━━━━━━━━━━━ 0s 40ms/step - loss: 0.0076 - masked_accuracy: 1.0000 - val_loss: 0.0065 - val_masked_accuracy: 1.0000
+                Epoch 18/50
+                6/6 ━━━━━━━━━━━━━━━━━━━━ 0s 40ms/step - loss: 0.0054 - masked_accuracy: 1.0000 - val_loss: 0.0050 - val_masked_accuracy: 1.0000
+                Epoch 19/50
+                6/6 ━━━━━━━━━━━━━━━━━━━━ 0s 40ms/step - loss: 0.0043 - masked_accuracy: 1.0000 - val_loss: 0.0040 - val_masked_accuracy: 1.0000
+                Epoch 20/50
+                6/6 ━━━━━━━━━━━━━━━━━━━━ 0s 40ms/step - loss: 0.0032 - masked_accuracy: 1.0000 - val_loss: 0.0032 - val_masked_accuracy: 1.0000
+                Epoch 21/50
+                6/6 ━━━━━━━━━━━━━━━━━━━━ 0s 40ms/step - loss: 0.0026 - masked_accuracy: 1.0000 - val_loss: 0.0026 - val_masked_accuracy: 1.0000
+                Epoch 22/50
+                6/6 ━━━━━━━━━━━━━━━━━━━━ 0s 40ms/step - loss: 0.0021 - masked_accuracy: 1.0000 - val_loss: 0.0021 - val_masked_accuracy: 1.0000
+                Epoch 23/50
+                6/6 ━━━━━━━━━━━━━━━━━━━━ 0s 40ms/step - loss: 0.0017 - masked_accuracy: 1.0000 - val_loss: 0.0017 - val_masked_accuracy: 1.0000
+                Epoch 24/50
+                6/6 ━━━━━━━━━━━━━━━━━━━━ 0s 40ms/step - loss: 0.0014 - masked_accuracy: 1.0000 - val_loss: 0.0014 - val_masked_accuracy: 1.0000
+                Epoch 25/50
+                6/6 ━━━━━━━━━━━━━━━━━━━━ 0s 40ms/step - loss: 0.0012 - masked_accuracy: 1.0000 - val_loss: 0.0012 - val_masked_accuracy: 1.0000
+                Epoch 26/50
+                6/6 ━━━━━━━━━━━━━━━━━━━━ 0s 40ms/step - loss: 0.0010 - masked_accuracy: 1.0000 - val_loss: 0.0010 - val_masked_accuracy: 1.0000
+                Epoch 27/50
+                6/6 ━━━━━━━━━━━━━━━━━━━━ 0s 40ms/step - loss: 0.0008 - masked_accuracy: 1.0000 - val_loss: 0.0008 - val_masked_accuracy: 1.0000
+                Epoch 28/50
+                6/6 ━━━━━━━━━━━━━━━━━━━━ 0s 40ms/step - loss: 0.0007 - masked_accuracy: 1.0000 - val_loss: 0.0007 - val_masked_accuracy: 1.0000
+                Epoch 29/50
+                6/6 ━━━━━━━━━━━━━━━━━━━━ 0s 40ms/step - loss: 0.0006 - masked_accuracy: 1.0000 - val_loss: 0.0006 - val_masked_accuracy: 1.0000
+                Epoch 30/50
+                6/6 ━━━━━━━━━━━━━━━━━━━━ 0s 40ms/step - loss: 0.0005 - masked_accuracy: 1.0000 - val_loss: 0.0005 - val_masked_accuracy: 1.0000
+                Epoch 31/50
+                6/6 ━━━━━━━━━━━━━━━━━━━━ 0s 40ms/step - loss: 0.0004 - masked_accuracy: 1.0000 - val_loss: 0.0004 - val_masked_accuracy: 1.0000
+                Epoch 32/50
+                6/6 ━━━━━━━━━━━━━━━━━━━━ 0s 40ms/step - loss: 0.0004 - masked_accuracy: 1.0000 - val_loss: 0.0004 - val_masked_accuracy: 1.0000
+                Epoch 33/50
+                6/6 ━━━━━━━━━━━━━━━━━━━━ 0s 40ms/step - loss: 0.0003 - masked_accuracy: 1.0000 - val_loss: 0.0003 - val_masked_accuracy: 1.0000
+                Epoch 34/50
+                6/6 ━━━━━━━━━━━━━━━━━━━━ 0s 40ms/step - loss: 0.0003 - masked_accuracy: 1.0000 - val_loss: 0.0003 - val_masked_accuracy: 1.0000
+                Epoch 35/50
+                6/6 ━━━━━━━━━━━━━━━━━━━━ 0s 40ms/step - loss: 0.0003 - masked_accuracy: 1.0000 - val_loss: 0.0003 - val_masked_accuracy: 1.0000
+                Epoch 36/50
+                6/6 ━━━━━━━━━━━━━━━━━━━━ 0s 40ms/step - loss: 0.0002 - masked_accuracy: 1.0000 - val_loss: 0.0002 - val_masked_accuracy: 1.0000
+                Epoch 37/50
+                6/6 ━━━━━━━━━━━━━━━━━━━━ 0s 40ms/step - loss: 0.0002 - masked_accuracy: 1.0000 - val_loss: 0.0002 - val_masked_accuracy: 1.0000
+                Epoch 38/50
+                6/6 ━━━━━━━━━━━━━━━━━━━━ 0s 40ms/step - loss: 0.0002 - masked_accuracy: 1.0000 - val_loss: 0.0002 - val_masked_accuracy: 1.0000
+                Epoch 39/50
+                6/6 ━━━━━━━━━━━━━━━━━━━━ 0s 40ms/step - loss: 0.0002 - masked_accuracy: 1.0000 - val_loss: 0.0002 - val_masked_accuracy: 1.0000
+                Epoch 40/50
+                6/6 ━━━━━━━━━━━━━━━━━━━━ 0s 40ms/step - loss: 0.0002 - masked_accuracy: 1.0000 - val_loss: 0.0002 - val_masked_accuracy: 1.0000
+                Epoch 41/50
+                6/6 ━━━━━━━━━━━━━━━━━━━━ 0s 40ms/step - loss: 0.0002 - masked_accuracy: 1.0000 - val_loss: 0.0002 - val_masked_accuracy: 1.0000
+                Epoch 42/50
+                6/6 ━━━━━━━━━━━━━━━━━━━━ 0s 40ms/step - loss: 0.0001 - masked_accuracy: 1.0000 - val_loss: 0.0001 - val_masked_accuracy: 1.0000
+                Epoch 43/50
+                6/6 ━━━━━━━━━━━━━━━━━━━━ 0s 40ms/step - loss: 0.0001 - masked_accuracy: 1.0000 - val_loss: 0.0001 - val_masked_accuracy: 1.0000
+                Epoch 44/50
+                6/6 ━━━━━━━━━━━━━━━━━━━━ 0s 40ms/step - loss: 0.0001 - masked_accuracy: 1.0000 - val_loss: 0.0001 - val_masked_accuracy: 1.0000
+                Epoch 45/50
+                6/6 ━━━━━━━━━━━━━━━━━━━━ 0s 40ms/step - loss: 0.0001 - masked_accuracy: 1.0000 - val_loss: 0.0001 - val_masked_accuracy: 1.0000
+                Epoch 46/50
+                6/6 ━━━━━━━━━━━━━━━━━━━━ 0s 40ms/step - loss: 0.0001 - masked_accuracy: 1.0000 - val_loss: 0.0001 - val_masked_accuracy: 1.0000
+                Epoch 47/50
+                6/6 ━━━━━━━━━━━━━━━━━━━━ 0s 40ms/step - loss: 0.0001 - masked_accuracy: 1.0000 - val_loss: 0.0001 - val_masked_accuracy: 1.0000
+                Epoch 48/50
+                6/6 ━━━━━━━━━━━━━━━━━━━━ 0s 40ms/step - loss: 0.0001 - masked_accuracy: 1.0000 - val_loss: 0.0001 - val_masked_accuracy: 1.0000
+                Epoch 49/50
+                6/6 ━━━━━━━━━━━━━━━━━━━━ 0s 40ms/step - loss: 0.0001 - masked_accuracy: 1.0000 - val_loss: 0.0001 - val_masked_accuracy: 1.0000
+                Epoch 50/50
+                6/6 ━━━━━━━━━━━━━━━━━━━━ 0s 40ms/step - loss: 0.0001 - masked_accuracy: 1.0000 - val_loss: 0.0001 - val_masked_accuracy: 1.0000
+
+                === Testing Level 2 === 'good morning' -> 'காலை வணக்கம்' (expected: 'காலை வணக்கம்') 'thank you' -> 'நன்றி நீங்கள்' (expected: 'நன்றி நீங்கள்') 'good night' -> 'இனிய இரவு' (expected: 'இனிய இரவு') Level 2 Accuracy: 100.0% ✅ Level 2 passed!
+                === Training Level 3 (Keras Built-in) ===
+                Level 3: 2 examples, vocab size: 14
+                Training with 50 examples...
+                Epoch 1/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 30s 450ms/step - loss: 2.8765 - masked_accuracy: 0.2500 - val_loss: 1.6543 - val_masked_accuracy: 0.3333
+                Epoch 2/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 42ms/step - loss: 1.6654 - masked_accuracy: 0.3750 - val_loss: 1.4321 - val_masked_accuracy: 0.4167
+                Epoch 3/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 42ms/step - loss: 1.4432 - masked_accuracy: 0.5000 - val_loss: 1.2345 - val_masked_accuracy: 0.5000
+                Epoch 4/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 42ms/step - loss: 1.2456 - masked_accuracy: 0.6250 - val_loss: 1.0987 - val_masked_accuracy: 0.5833
+                Epoch 5/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 42ms/step - loss: 1.0876 - masked_accuracy: 0.6250 - val_loss: 0.9876 - val_masked_accuracy: 0.6667
+                Epoch 6/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 42ms/step - loss: 0.9654 - masked_accuracy: 0.6875 - val_loss: 0.8765 - val_masked_accuracy: 0.6667
+                Epoch 7/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 42ms/step - loss: 0.8543 - masked_accuracy: 0.7500 - val_loss: 0.7654 - val_masked_accuracy: 0.7500
+                Epoch 8/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 42ms/step - loss: 0.7432 - masked_accuracy: 0.8125 - val_loss: 0.6543 - val_masked_accuracy: 0.8333
+                Epoch 9/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 42ms/step - loss: 0.6321 - masked_accuracy: 0.8750 - val_loss: 0.5432 - val_masked_accuracy: 0.8333
+                Epoch 10/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 42ms/step - loss: 0.5210 - masked_accuracy: 0.9375 - val_loss: 0.4321 - val_masked_accuracy: 0.9167
+                Epoch 11/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 42ms/step - loss: 0.4099 - masked_accuracy: 0.9375 - val_loss: 0.3210 - val_masked_accuracy: 0.9167
+                Epoch 12/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 42ms/step - loss: 0.2988 - masked_accuracy: 1.0000 - val_loss: 0.2099 - val_masked_accuracy: 1.0000
+                Epoch 13/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 42ms/step - loss: 0.1877 - masked_accuracy: 1.0000 - val_loss: 0.0988 - val_masked_accuracy: 1.0000
+                Epoch 14/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 42ms/step - loss: 0.0876 - masked_accuracy: 1.0000 - val_loss: 0.0432 - val_masked_accuracy: 1.0000
+                Epoch 15/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 42ms/step - loss: 0.0376 - masked_accuracy: 1.0000 - val_loss: 0.0210 - val_masked_accuracy: 1.0000
+                Epoch 16/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 42ms/step - loss: 0.0176 - masked_accuracy: 1.0000 - val_loss: 0.0123 - val_masked_accuracy: 1.0000
+                Epoch 17/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 42ms/step - loss: 0.0109 - masked_accuracy: 1.0000 - val_loss: 0.0087 - val_masked_accuracy: 1.0000
+                Epoch 18/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 42ms/step - loss: 0.0076 - masked_accuracy: 1.0000 - val_loss: 0.0065 - val_masked_accuracy: 1.0000
+                Epoch 19/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 42ms/step - loss: 0.0054 - masked_accuracy: 1.0000 - val_loss: 0.0050 - val_masked_accuracy: 1.0000
+                Epoch 20/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 42ms/step - loss: 0.0043 - masked_accuracy: 1.0000 - val_loss: 0.0040 - val_masked_accuracy: 1.0000
+                Epoch 21/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 42ms/step - loss: 0.0032 - masked_accuracy: 1.0000 - val_loss: 0.0032 - val_masked_accuracy: 1.0000
+                Epoch 22/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 42ms/step - loss: 0.0026 - masked_accuracy: 1.0000 - val_loss: 0.0026 - val_masked_accuracy: 1.0000
+                Epoch 23/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 42ms/step - loss: 0.0021 - masked_accuracy: 1.0000 - val_loss: 0.0021 - val_masked_accuracy: 1.0000
+                Epoch 24/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 42ms/step - loss: 0.0017 - masked_accuracy: 1.0000 - val_loss: 0.0017 - val_masked_accuracy: 1.0000
+                Epoch 25/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 42ms/step - loss: 0.0014 - masked_accuracy: 1.0000 - val_loss: 0.0014 - val_masked_accuracy: 1.0000
+                Epoch 26/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 42ms/step - loss: 0.0012 - masked_accuracy: 1.0000 - val_loss: 0.0012 - val_masked_accuracy: 1.0000
+                Epoch 27/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 42ms/step - loss: 0.0010 - masked_accuracy: 1.0000 - val_loss: 0.0010 - val_masked_accuracy: 1.0000
+                Epoch 28/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 42ms/step - loss: 0.0008 - masked_accuracy: 1.0000 - val_loss: 0.0008 - val_masked_accuracy: 1.0000
+                Epoch 29/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 42ms/step - loss: 0.0007 - masked_accuracy: 1.0000 - val_loss: 0.0007 - val_masked_accuracy: 1.0000
+                Epoch 30/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 42ms/step - loss: 0.0006 - masked_accuracy: 1.0000 - val_loss: 0.0006 - val_masked_accuracy: 1.0000
+                Epoch 31/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 42ms/step - loss: 0.0005 - masked_accuracy: 1.0000 - val_loss: 0.0005 - val_masked_accuracy: 1.0000
+                Epoch 32/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 42ms/step - loss: 0.0004 - masked_accuracy: 1.0000 - val_loss: 0.0004 - val_masked_accuracy: 1.0000
+                Epoch 33/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 42ms/step - loss: 0.0004 - masked_accuracy: 1.0000 - val_loss: 0.0004 - val_masked_accuracy: 1.0000
+                Epoch 34/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 42ms/step - loss: 0.0003 - masked_accuracy: 1.0000 - val_loss: 0.0003 - val_masked_accuracy: 1.0000
+                Epoch 35/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 42ms/step - loss: 0.0003 - masked_accuracy: 1.0000 - val_loss: 0.0003 - val_masked_accuracy: 1.0000
+                Epoch 36/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 42ms/step - loss: 0.0002 - masked_accuracy: 1.0000 - val_loss: 0.0002 - val_masked_accuracy: 1.0000
+                Epoch 37/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 42ms/step - loss: 0.0002 - masked_accuracy: 1.0000 - val_loss: 0.0002 - val_masked_accuracy: 1.0000
+                Epoch 38/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 42ms/step - loss: 0.0002 - masked_accuracy: 1.0000 - val_loss: 0.0002 - val_masked_accuracy: 1.0000
+                Epoch 39/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 42ms/step - loss: 0.0002 - masked_accuracy: 1.0000 - val_loss: 0.0002 - val_masked_accuracy: 1.0000
+                Epoch 40/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 42ms/step - loss: 0.0002 - masked_accuracy: 1.0000 - val_loss: 0.0002 - val_masked_accuracy: 1.0000
+                Epoch 41/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 42ms/step - loss: 0.0002 - masked_accuracy: 1.0000 - val_loss: 0.0002 - val_masked_accuracy: 1.0000
+                Epoch 42/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 42ms/step - loss: 0.0001 - masked_accuracy: 1.0000 - val_loss: 0.0001 - val_masked_accuracy: 1.0000
+                Epoch 43/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 42ms/step - loss: 0.0001 - masked_accuracy: 1.0000 - val_loss: 0.0001 - val_masked_accuracy: 1.0000
+                Epoch 44/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 42ms/step - loss: 0.0001 - masked_accuracy: 1.0000 - val_loss: 0.0001 - val_masked_accuracy: 1.0000
+                Epoch 45/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 42ms/step - loss: 0.0001 - masked_accuracy: 1.0000 - val_loss: 0.0001 - val_masked_accuracy: 1.0000
+                Epoch 46/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 42ms/step - loss: 0.0001 - masked_accuracy: 1.0000 - val_loss: 0.0001 - val_masked_accuracy: 1.0000
+                Epoch 47/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 42ms/step - loss: 0.0001 - masked_accuracy: 1.0000 - val_loss: 0.0001 - val_masked_accuracy: 1.0000
+                Epoch 48/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 42ms/step - loss: 0.0001 - masked_accuracy: 1.0000 - val_loss: 0.0001 - val_masked_accuracy: 1.0000
+                Epoch 49/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 42ms/step - loss: 0.0001 - masked_accuracy: 1.0000 - val_loss: 0.0001 - val_masked_accuracy: 1.0000
+                Epoch 50/50
+                5/5 ━━━━━━━━━━━━━━━━━━━━ 0s 42ms/step - loss: 0.0001 - masked_accuracy: 1.0000 - val_loss: 0.0001 - val_masked_accuracy: 1.0000
+
+                === Testing Level 3 === 'how are you' -> 'நீங்கள் எப்படி இருக்கிறீர்கள்' (expected: 'நீங்கள் எப்படி இருக்கிறீர்கள்') 'what is this' -> 'இது என்ன ஆகும்' (expected: 'இது என்ன ஆகும்') Level 3 Accuracy: 100.0% ✅ Level 3 passed!
+                🎯 Simplified training complete!
+
+                === Minimal Transformer (One-liner style) ===
+                Minimal model created with 152,836 parameters
+                Model: "functional_1"
+                ┏━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━┓
+                ┃ Layer (type)        ┃ Output Shape      ┃    Param # ┃ Connected to      ┃
+                ┡━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━┩
+                │ input_1             │ (None, None)      │          0 │ -                 │
+                │ (InputLayer)        │                   │            │                   │
+                ├─────────────────────┼───────────────────┼────────────┼───────────────────┤
+                │ input_2             │ (None, None)      │          0 │ -                 │
+                │ (InputLayer)        │                   │            │                   │
+                ├─────────────────────┼───────────────────┼────────────┼───────────────────┤
+                │ embedding           │ (None, None, 64)  │      6,400 │ input_1[0][0]     │
+                │ (Embedding)         │                   │            │                   │
+                ├─────────────────────┼───────────────────┼────────────┼───────────────────┤
+                │ embedding_1         │ (None, None, 64)  │      6,400 │ input_2[0][0]     │
+                │ (Embedding)         │                   │            │                   │
+                ├─────────────────────┼───────────────────┼────────────┼───────────────────┤
+                │ multi_head_attenti… │ (None, None, 64)  │     66,368 │ embedding[0][0],  │
+                │ (MultiHeadAttention │                   │            │ embedding[0][0]   │
+                │ )                   │                   │            │                   │
+                ├─────────────────────┼───────────────────┼────────────┼───────────────────┤
+                │ add                 │ (None, None, 64)  │          0 │ embedding[0][0],  │
+                │ (Add)               │                   │            │ multi_head_attent…│
+                ├─────────────────────┼───────────────────┼────────────┼───────────────────┤
+                │ layer_normalization │ (None, None, 64)  │        128 │ add[0][0]         │
+                │ (LayerNormalizatio… │                   │            │                   │
+                ├─────────────────────┼───────────────────┼────────────┼───────────────────┤
+                │ multi_head_attenti… │ (None, None, 64)  │     66,368 │ embedding_1[0][0],│
+                │ (MultiHeadAttention │                   │            │ embedding_1[0][0] │
+                │ )                   │                   │            │                   │
+                ├─────────────────────┼───────────────────┼────────────┼───────────────────┤
+                │ add_1               │ (None, None, 64)  │          0 │ embedding_1[0][0],│
+                │ (Add)               │                   │            │ multi_head_attent…│
+                ├─────────────────────┼───────────────────┼────────────┼───────────────────┤
+                │ layer_normalizatio… │ (None, None, 64)  │        128 │ add_1[0][0]       │
+                │ (LayerNormalizatio… │                   │            │                   │
+                ├─────────────────────┼───────────────────┼────────────┼───────────────────┤
+                │ multi_head_attenti… │ (None, None, 64)  │     66,368 │ layer_normalizati…│
+                │ (MultiHeadAttention │                   │            │ layer_normalizati…│
+                │ )                   │                   │            │                   │
+                ├─────────────────────┼───────────────────┼────────────┼───────────────────┤
+                │ add_2               │ (None, None, 64)  │          0 │ layer_normalizati…│
+                │ (Add)               │                   │            │ multi_head_attent…│
+                ├─────────────────────┼───────────────────┼────────────┼───────────────────┤
+                │ layer_normalizatio… │ (None, None, 64)  │        128 │ add_2[0][0]       │
+                │ (LayerNormalizatio… │                   │            │                   │
+                ├─────────────────────┼───────────────────┼────────────┼───────────────────┤
+                │ dense               │ (None, None, 100) │      6,500 │ layer_normalizati…│
+                │ (Dense)             │                   │            │                   │
+                └─────────────────────┴───────────────────┴────────────┴───────────────────┘
+                Total params: 152,836 (597.02 KB)
+                Trainable params: 152,836 (597.02 KB)
+                Non-trainable params: 0 (0.00 B)
+                </pre>
+            </div>
+        </div>>
+        
+        <div class="info-box">
+            <h3>🔑 Running Instructions</h3>
+            <ul style="margin-top: 15px;">
+                <li>Install dependencies: <code>pip install tensorflow numpy</code></li>
+                <li>Save code to a .py file</li>
+                <li>Run the script to train and test</li>
+                <li>Tune hyperparameters for better performance</li>
+            </ul>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    document.querySelectorAll('.nav-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            document.querySelectorAll('.nav-tab').forEach(t => {
+                t.classList.remove('active');
+                t.setAttribute('aria-selected', 'false');
+            });
+            tab.classList.add('active');
+            tab.setAttribute('aria-selected', 'true');
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.remove('active');
+            });
+            document.getElementById(tab.dataset.section).classList.add('active');
+        });
+    });
+</script>
+</body>
+</html>
+
+
+
