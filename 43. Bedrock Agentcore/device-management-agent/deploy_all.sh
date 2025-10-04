@@ -5,6 +5,12 @@
 
 set -e  # Exit on error
 
+# Activate virtual environment if it exists
+if [ -d "agentcore_env" ]; then
+  echo "Activating virtual environment..."
+  source agentcore_env/bin/activate
+fi
+
 # Function to display section headers
 section() {
   echo ""
@@ -29,15 +35,28 @@ if ! command_exists aws; then
 fi
 
 # Check for Python
-if ! command_exists python; then
+if command_exists python3; then
+  PYTHON_CMD="python3"
+  PIP_CMD="pip3"
+elif command_exists python; then
+  PYTHON_CMD="python"
+  PIP_CMD="pip"
+else
   echo "Error: Python is not installed. Please install Python 3.8 or higher."
   exit 1
 fi
 
 # Check for pip
-if ! command_exists pip; then
+if ! command_exists $PIP_CMD && ! command_exists pip; then
   echo "Error: pip is not installed. Please install it first."
   exit 1
+fi
+
+# Use pip3 if available, otherwise use pip
+if command_exists pip3; then
+  PIP_CMD="pip3"
+elif command_exists pip; then
+  PIP_CMD="pip"
 fi
 
 # Check AWS credentials
@@ -53,7 +72,7 @@ section "Step 1: Deploying Device Management Lambda"
 
 cd device-management
 echo "Installing Python dependencies..."
-pip install -r requirements.txt
+$PIP_CMD install -r requirements.txt
 
 echo "Deploying Lambda function..."
 chmod +x deploy.sh
@@ -125,41 +144,264 @@ else
   fi
 fi
 
-echo "Creating gateway..."
-python create_gateway.py
+echo "Installing Python dependencies for gateway..."
+$PIP_CMD install -r requirements.txt
 
-# Get the Gateway ID from the output
+echo "Checking for existing gateway..."
 GATEWAY_NAME=$(grep GATEWAY_NAME .env | cut -d= -f2)
-GATEWAY_ID=$(aws bedrock-agentcore list-gateways --query "gateways[?name=='$GATEWAY_NAME'].gatewayId" --output text)
+EXISTING_GATEWAY=$(aws bedrock-agentcore-control list-gateways --query "items[?name=='$GATEWAY_NAME']" --output text --region us-west-2 2>/dev/null)
 
-if [ -z "$GATEWAY_ID" ]; then
-  echo "Error: Failed to get Gateway ID."
-  exit 1
-fi
-
-echo "Gateway ID: $GATEWAY_ID"
-
-# Update the .env file with the Gateway ID
-if [[ "$OSTYPE" == "darwin"* ]]; then
-  sed -i '' "s|GATEWAY_IDENTIFIER=.*|GATEWAY_IDENTIFIER=$GATEWAY_ID|g" .env
+if [ -n "$EXISTING_GATEWAY" ]; then
+  # Get existing gateway details
+  GATEWAY_ID=$(aws bedrock-agentcore-control list-gateways --query "items[?name=='$GATEWAY_NAME'].gatewayId" --output text --region us-west-2)
+  
+  echo "Gateway '$GATEWAY_NAME' already exists!"
+  echo "Using existing Gateway ID: $GATEWAY_ID"
+  
+  # Update .env file with existing gateway info
+  if [[ "$OSTYPE" == "darwin"* ]]; then
+    sed -i '' "s|GATEWAY_IDENTIFIER=.*|GATEWAY_IDENTIFIER=$GATEWAY_ID|g" .env
+    sed -i '' "s|GATEWAY_ID=.*|GATEWAY_ID=$GATEWAY_ID|g" .env
+  else
+    sed -i "s|GATEWAY_IDENTIFIER=.*|GATEWAY_IDENTIFIER=$GATEWAY_ID|g" .env
+    sed -i "s|GATEWAY_ID=.*|GATEWAY_ID=$GATEWAY_ID|g" .env
+  fi
 else
-  sed -i "s|GATEWAY_IDENTIFIER=.*|GATEWAY_IDENTIFIER=$GATEWAY_ID|g" .env
+  echo "Creating gateway..."
+  $PYTHON_CMD create_gateway.py
+  
+  # Get the Gateway ID from the created gateway
+  GATEWAY_ID=$(aws bedrock-agentcore-control list-gateways --query "items[?name=='$GATEWAY_NAME'].gatewayId" --output text --region us-west-2)
+  
+  if [ -z "$GATEWAY_ID" ]; then
+    echo "Error: Failed to get Gateway ID."
+    exit 1
+  fi
+  
+  echo "Gateway ID: $GATEWAY_ID"
+  
+  # Update the .env file with the Gateway ID
+  if [[ "$OSTYPE" == "darwin"* ]]; then
+    sed -i '' "s|GATEWAY_IDENTIFIER=.*|GATEWAY_IDENTIFIER=$GATEWAY_ID|g" .env
+  else
+    sed -i "s|GATEWAY_IDENTIFIER=.*|GATEWAY_IDENTIFIER=$GATEWAY_ID|g" .env
+  fi
 fi
 
-echo "Creating gateway target..."
-python device-management-target.py
+echo "Creating gateway target using AWS CLI..."
+
+# Create target configuration JSON file
+cat > target-config.json << 'EOF'
+{
+  "mcp": {
+    "lambda": {
+      "lambdaArn": "LAMBDA_ARN_PLACEHOLDER",
+      "toolSchema": {
+        "inlinePayload": [
+          {
+            "name": "list_devices",
+            "description": "To list the devices. use action_name default parameter value as 'list_devices'",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "action_name": {
+                  "type": "string"
+                }
+              },
+              "required": ["action_name"]
+            }
+          },
+          {
+            "name": "get_device_settings",
+            "description": "To list the devices. use action_name default parameter value as 'get_device_settings'. You need to get teh device_id from the user",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "action_name": {
+                  "type": "string"
+                },
+                "device_id": {
+                  "type": "string"
+                }
+              },
+              "required": ["action_name", "device_id"]
+            }
+          },
+          {
+            "name": "list_wifi_networks",
+            "description": "To list the devices. use action_name default parameter value as 'list_wifi_networks'. You need to get teh device_id from the user",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "action_name": {
+                  "type": "string"
+                },
+                "device_id": {
+                  "type": "string"
+                }
+              },
+              "required": ["action_name", "device_id"]
+            }
+          },
+          {
+            "name": "list_users",
+            "description": "To list the devices. use action_name default parameter value as 'list_users'",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "action_name": {
+                  "type": "string"
+                }
+              },
+              "required": ["action_name"]
+            }
+          },
+          {
+            "name": "query_user_activity",
+            "description": "To list the devices. use action_name default parameter value as 'query_user_activity'. Please get start_date, end_date, user_id and activity_type from the user",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "action_name": {
+                  "type": "string"
+                },
+                "start_date": {
+                  "type": "string"
+                },
+                "end_date": {
+                  "type": "string"
+                },
+                "user_id": {
+                  "type": "string"
+                },
+                "activity_type": {
+                  "type": "string"
+                }
+              },
+              "required": ["action_name", "start_date", "end_date"]
+            }
+          },
+          {
+            "name": "update_wifi_ssid",
+            "description": "To list the devices. use action_name default parameter value as 'update_wifi_ssid'. Get device_id, network_id and ssid from the user if not given in the context.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "action_name": {
+                  "type": "string"
+                },
+                "device_id": {
+                  "type": "string"
+                },
+                "network_id": {
+                  "type": "string"
+                },
+                "ssid": {
+                  "type": "string"
+                }
+              },
+              "required": ["action_name", "device_id", "network_id", "ssid"]
+            }
+          },
+          {
+            "name": "update_wifi_security",
+            "description": "To list the devices. use action_name default parameter value as 'update_wifi_security'. Get device_id, network_id and security_type from the user if not given in the context.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "action_name": {
+                  "type": "string"
+                },
+                "device_id": {
+                  "type": "string"
+                },
+                "network_id": {
+                  "type": "string"
+                },
+                "security_type": {
+                  "type": "string"
+                }
+              },
+              "required": ["action_name", "device_id", "network_id", "security_type"]
+            }
+          }
+        ]
+      }
+    }
+  }
+}
+EOF
+
+# Replace the Lambda ARN placeholder with the actual ARN
+if [[ "$OSTYPE" == "darwin"* ]]; then
+  sed -i '' "s|LAMBDA_ARN_PLACEHOLDER|$LAMBDA_ARN|g" target-config.json
+else
+  sed -i "s|LAMBDA_ARN_PLACEHOLDER|$LAMBDA_ARN|g" target-config.json
+fi
+
+# Create credential configuration JSON file
+cat > credential-config.json << 'EOF'
+[
+  {
+    "credentialProviderType": "GATEWAY_IAM_ROLE"
+  }
+]
+EOF
+
+# Check if target already exists
+EXISTING_TARGET=$(aws bedrock-agentcore-control list-gateway-targets --gateway-identifier "$GATEWAY_ID" --region us-west-2 --query "items[?name=='device-management-target'].targetId" --output text 2>/dev/null || echo "")
+
+if [ -n "$EXISTING_TARGET" ]; then
+  echo "Gateway target 'device-management-target' already exists with ID: $EXISTING_TARGET"
+else
+  # Create gateway target using AWS CLI
+  TARGET_RESPONSE=$(aws bedrock-agentcore-control create-gateway-target \
+    --gateway-identifier "$GATEWAY_ID" \
+    --name "device-management-target" \
+    --description "List, Update device management activities" \
+    --credential-provider-configurations file://credential-config.json \
+    --target-configuration file://target-config.json \
+    --region us-west-2 2>&1)
+  
+  if [ $? -eq 0 ]; then
+    TARGET_ID=$(echo "$TARGET_RESPONSE" | grep -o '"targetId": "[^"]*"' | cut -d'"' -f4)
+    echo "✅ Gateway target created successfully!"
+    echo "Target ID: $TARGET_ID"
+  else
+    echo "❌ Failed to create gateway target:"
+    echo "$TARGET_RESPONSE"
+    echo ""
+    echo "This might be due to IAM permission propagation delay."
+    echo "Please see gateway/IAM_PERMISSIONS_FIX.md for troubleshooting steps."
+    exit 1
+  fi
+fi
+
+# Clean up temporary files
+rm -f target-config.json credential-config.json
 
 # Update .env with Gateway ARN and ID for observability
-GATEWAY_ARN=$(aws bedrock-agentcore list-gateways --query "gateways[?gatewayId=='$GATEWAY_ID'].gatewayArn" --output text)
+GATEWAY_ARN=$(aws bedrock-agentcore-control list-gateways --query "items[?gatewayId=='$GATEWAY_ID'].gatewayArn" --output text --region us-west-2)
 if ! grep -q "^GATEWAY_ARN=" .env; then
   echo "GATEWAY_ARN=$GATEWAY_ARN" >> .env
+else
+  if [[ "$OSTYPE" == "darwin"* ]]; then
+    sed -i '' "s|GATEWAY_ARN=.*|GATEWAY_ARN=$GATEWAY_ARN|g" .env
+  else
+    sed -i "s|GATEWAY_ARN=.*|GATEWAY_ARN=$GATEWAY_ARN|g" .env
+  fi
 fi
 if ! grep -q "^GATEWAY_ID=" .env; then
   echo "GATEWAY_ID=$GATEWAY_ID" >> .env
 fi
 
 echo "Setting up gateway observability..."
-python gateway_observability.py
+if $PYTHON_CMD gateway_observability.py; then
+  echo "✅ Gateway observability configured successfully"
+else
+  echo "⚠️  Gateway observability setup skipped (optional)"
+  echo "You can run 'cd gateway && python3 gateway_observability.py' manually later if needed"
+fi
 
 cd ..
 
@@ -200,9 +442,10 @@ fi
 if ! grep -q "opentelemetry-instrumentation-requests" requirements-runtime.txt; then
   echo "opentelemetry-instrumentation-requests>=0.40b0" >> requirements-runtime.txt
 fi
-if ! grep -q "opentelemetry-instrumentation-boto3" requirements-runtime.txt; then
-  echo "opentelemetry-instrumentation-boto3>=0.40b0" >> requirements-runtime.txt
-fi
+# Note: opentelemetry-instrumentation-boto3 package doesn't exist, skip it
+# if ! grep -q "opentelemetry-instrumentation-boto3" requirements-runtime.txt; then
+#   echo "opentelemetry-instrumentation-boto3>=0.40b0" >> requirements-runtime.txt
+# fi
 
 # Update Dockerfile with OpenTelemetry configuration
 echo "Updating Dockerfile with OpenTelemetry configuration..."
@@ -271,10 +514,10 @@ if [ -f .bedrock_agentcore.yaml ]; then
 fi
 
 echo "Installing Python dependencies for agent runtime..."
-pip install -r requirements-runtime.txt
+$PIP_CMD install -r requirements-runtime.txt
 
 echo "Deploying agent runtime..."
-python strands_agent_runtime_deploy.py
+$PYTHON_CMD strands_agent_runtime_deploy.py
 
 cd ..
 

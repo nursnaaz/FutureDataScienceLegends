@@ -7,3 +7,7 @@ bedrock-agentcore
 bedrock-agentcore-starter-toolkit
 strands-agents>=0.1.0
 strands-agents-tools>=0.1.0
+aws_opentelemetry_distro_genai_beta>=0.1.2
+aws-xray-sdk>=2.12.0
+watchtower>=3.0.1
+opentelemetry-instrumentation-requests>=0.40b0

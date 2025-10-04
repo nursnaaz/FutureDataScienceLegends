@@ -62,7 +62,6 @@ tests/
 
 # Bedrock AgentCore specific - keep config but exclude runtime files
 .bedrock_agentcore.yaml
-Dockerfile
 .dockerignore
 
 # Keep wheelhouse for offline installations
@@ -75,14 +74,10 @@ __pycache__/
 .git/
 images/
 setup.sh
-.bedrock_agentcore.yaml
-strands-agent-runtime.py.bk
 requirements.txt
 cognito_credentials_provider.py
-Dockerfile
 strands_agent_runtime_deploy.py
 README.md
-.dockerignore
 .env
 access_token copy.py
 device_management_agent_exec.py

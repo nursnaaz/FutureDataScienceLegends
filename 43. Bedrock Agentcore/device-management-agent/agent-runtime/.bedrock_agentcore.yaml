@@ -1,15 +1,17 @@
-default_agent: device_agent_07_aug_4
+default_agent: device_management_agent_29_jul_21
 agents:
-  device_agent_07_aug_4:
-    name: device_agent_07_aug_4
-    entrypoint: /Users/vgodwin/genesis-test/agent-runtime/device_management/samples/02-use-cases/05-Device-Management-System/agent-runtime/strands_agent_runtime.py
+  device_management_agent_29_jul_21:
+    name: device_management_agent_29_jul_21
+    entrypoint: /Users/mohamednoordeenalaudeen/Documents/PersonalGit/FutureDataScienceLegends/43.
+      Bedrock Agentcore/device-management-agent/agent-runtime/strands_agent_runtime.py
     platform: linux/arm64
-    container_runtime: docker
+    container_runtime: none
     aws:
-      execution_role: arn:aws:iam::288947426911:role/AgentGatewayAccessRole
-      account: '288947426911'
+      execution_role: arn:aws:iam::455820316982:role/AgentGatewayAccessRole
+      execution_role_auto_create: false
+      account: '455820316982'
       region: us-west-2
-      ecr_repository: 288947426911.dkr.ecr.us-west-2.amazonaws.com/bedrock_agentcore-device_agent_07_aug_4
+      ecr_repository: 455820316982.dkr.ecr.us-west-2.amazonaws.com/bedrock-agentcore-device_management_agent_29_jul_21
       ecr_auto_create: false
       network_configuration:
         network_mode: PUBLIC
@@ -18,8 +20,12 @@ agents:
       observability:
         enabled: true
     bedrock_agentcore:
-      agent_id: device_agent_07_aug_4-WHWWbI2v35
-      agent_arn: arn:aws:bedrock-agentcore:us-west-2:288947426911:runtime/device_agent_07_aug_4-WHWWbI2v35
-      agent_session_id: b5248e19-b5fb-448d-8a7f-528999cede24
+      agent_id: null
+      agent_arn: null
+      agent_session_id: null
+    codebuild:
+      project_name: bedrock-agentcore-device_management_agent_29_jul_21-builder
+      execution_role: arn:aws:iam::455820316982:role/AmazonBedrockAgentCoreSDKCodeBuild-us-west-2-3d92502f53
+      source_bucket: bedrock-agentcore-codebuild-sources-455820316982-us-west-2
     authorizer_configuration: null
     oauth_configuration: null

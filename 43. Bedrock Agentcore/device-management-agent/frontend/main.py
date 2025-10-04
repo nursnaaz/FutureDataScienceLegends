@@ -52,11 +52,19 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Environment variables
 AWS_REGION = os.getenv("AWS_REGION", "us-west-2")
+MCP_SERVER_URL = os.getenv("MCP_SERVER_URL")
 AGENT_ARN = os.getenv("AGENT_ARN")
 
-if not AGENT_ARN:
-    logger.error("AGENT_ARN environment variable is not set")
-    raise ValueError("AGENT_ARN environment variable is required")
+# Use gateway URL if no agent ARN is available
+if not AGENT_ARN and not MCP_SERVER_URL:
+    logger.error("Either AGENT_ARN or MCP_SERVER_URL environment variable must be set")
+    raise ValueError("Either AGENT_ARN or MCP_SERVER_URL environment variable is required")
+
+# Log which service we're using
+if AGENT_ARN:
+    logger.info(f"Using Agent Runtime: {AGENT_ARN}")
+else:
+    logger.info(f"Using Gateway URL: {MCP_SERVER_URL}")
 
 # Models
 class Message(BaseModel):
@@ -326,11 +334,18 @@ def create_agentcore_client(auth_token=None):
     # Create boto session
     boto_session = boto3.Session(region_name=AWS_REGION)
     
-    # Create bedrock-agentcore client
-    agentcore_client = boto_session.client(
-        'bedrock-agentcore',
-        region_name=AWS_REGION
-    )
+    if AGENT_ARN:
+        # Use bedrock-agentcore client for agent runtime
+        agentcore_client = boto_session.client(
+            'bedrock-agentcore',
+            region_name=AWS_REGION
+        )
+    else:
+        # Use lambda client to directly invoke the Lambda function
+        agentcore_client = boto_session.client(
+            'lambda',
+            region_name=AWS_REGION
+        )
     
     return agentcore_client
 
@@ -365,23 +380,51 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
                 
                 for attempt in range(max_retries):
                     try:
-                        if session_id is None:
-                            # First message in conversation
-                            logger.info("Starting new conversation with streaming")
-                            boto3_response = agentcore_client.invoke_agent_runtime(
-                                agentRuntimeArn=AGENT_ARN,
-                                qualifier="DEFAULT",
-                                payload=json.dumps({"prompt": user_message})
-                            )
+                        if AGENT_ARN:
+                            # Use agent runtime
+                            if session_id is None:
+                                logger.info("Starting new conversation with agent runtime")
+                                boto3_response = agentcore_client.invoke_agent_runtime(
+                                    agentRuntimeArn=AGENT_ARN,
+                                    qualifier="DEFAULT",
+                                    payload=json.dumps({"prompt": user_message})
+                                )
+                            else:
+                                logger.info(f"Continuing conversation with session ID: {session_id}")
+                                boto3_response = agentcore_client.invoke_agent_runtime(
+                                    agentRuntimeArn=AGENT_ARN,
+                                    qualifier="DEFAULT",
+                                    payload=json.dumps({"prompt": user_message}),
+                                    runtimeSessionId=session_id
+                                )
                         else:
-                            # Continuing conversation with existing session ID
-                            logger.info(f"Continuing conversation with session ID: {session_id}")
-                            boto3_response = agentcore_client.invoke_agent_runtime(
-                                agentRuntimeArn=AGENT_ARN,
-                                qualifier="DEFAULT",
-                                payload=json.dumps({"prompt": user_message}),
-                                runtimeSessionId=session_id
+                            # Use Lambda function directly
+                            logger.info("Invoking Lambda function directly")
+                            # Parse user message to determine action
+                            if "list devices" in user_message.lower():
+                                action_payload = {"action_name": "list_devices"}
+                            elif "device settings" in user_message.lower() or "settings for device" in user_message.lower():
+                                # Extract device ID from message
+                                words = user_message.split()
+                                device_id = "DEV001"  # Default
+                                for i, word in enumerate(words):
+                                    if word.upper().startswith("DEV") or word.upper().startswith("DG-"):
+                                        device_id = word
+                                        break
+                                action_payload = {"action_name": "get_device_settings", "device_id": device_id}
+                            elif "wifi networks" in user_message.lower() or "list wifi" in user_message.lower():
+                                device_id = "DEV001"  # Default
+                                action_payload = {"action_name": "list_wifi_networks", "device_id": device_id}
+                            elif "list users" in user_message.lower():
+                                action_payload = {"action_name": "list_users"}
+                            else:
+                                action_payload = {"action_name": "list_devices"}
+                            
+                            boto3_response = agentcore_client.invoke(
+                                FunctionName="DeviceManagementLambda",
+                                Payload=json.dumps(action_payload)
                             )
+                        
                         # If successful, break out of retry loop
                         break
                     except ClientError as e:

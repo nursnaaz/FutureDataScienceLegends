@@ -35,44 +35,80 @@ auth_config = {
     }
 }
 
-# Create the gateway
-try:
-    create_response = bedrock_agent_core_client.create_gateway(
-        name=GATEWAY_NAME,
-        roleArn=ROLE_ARN,  # The IAM Role must have permissions to create/list/get/delete Gateway 
-        protocolType='MCP',
-        authorizerType='CUSTOM_JWT',
-        authorizerConfiguration=auth_config, 
-        description=GATEWAY_DESCRIPTION
-    )
+# Check if gateway already exists first
+def find_existing_gateway(name):
+    """Find existing gateway by name"""
+    try:
+        response = bedrock_agent_core_client.list_gateways()
+        for gateway in response.get('gateways', []):
+            if gateway.get('name') == name:
+                return gateway
+        return None
+    except Exception as e:
+        print(f"Warning: Error checking for existing gateway: {e}")
+        return None
 
-    # Print the gateway ID and other information
-    gateway_id = create_response.get('gatewayId')
-    gateway_arn = create_response.get('gatewayArn')
-    print(f"Gateway created successfully!")
-    print(f"Gateway ID: {gateway_id}")
-    print(f"Gateway ARN: {gateway_arn}")
-    print(f"Creation Time: {create_response.get('creationTime')}")
+# Check for existing gateway first
+existing_gateway = find_existing_gateway(GATEWAY_NAME)
 
-    # Update the .env file with the gateway information
+if existing_gateway:
+    # Use existing gateway
+    gateway_id = existing_gateway.get('gatewayId')
+    gateway_arn = existing_gateway.get('gatewayArn')
+    print(f"Gateway '{GATEWAY_NAME}' already exists!")
+    print(f"Using existing Gateway ID: {gateway_id}")
+    print(f"Using existing Gateway ARN: {gateway_arn}")
+    
+    # Update the .env file with the existing gateway information
     env_file_path = '.env'
     try:
         if gateway_id:
             set_key(env_file_path, 'GATEWAY_ID', gateway_id)
-            print(f"Updated .env file with GATEWAY_ID: {gateway_id}")
+            set_key(env_file_path, 'GATEWAY_IDENTIFIER', gateway_id)
+            print(f"Updated .env file with existing GATEWAY_ID: {gateway_id}")
         
         if gateway_arn:
             set_key(env_file_path, 'GATEWAY_ARN', gateway_arn)
-            print(f"Updated .env file with GATEWAY_ARN: {gateway_arn}")
-            
-        # Also keep the legacy GATEWAY_IDENTIFIER for backward compatibility
-        if gateway_id:
-            set_key(env_file_path, 'GATEWAY_IDENTIFIER', gateway_id)
-            print(f"Updated .env file with GATEWAY_IDENTIFIER: {gateway_id}")
+            print(f"Updated .env file with existing GATEWAY_ARN: {gateway_arn}")
             
     except Exception as e:
         print(f"Warning: Failed to update .env file: {e}")
+        
+else:
+    # Create new gateway
+    try:
+        create_response = bedrock_agent_core_client.create_gateway(
+            name=GATEWAY_NAME,
+            roleArn=ROLE_ARN,  # The IAM Role must have permissions to create/list/get/delete Gateway
+            protocolType='MCP',
+            authorizerType='CUSTOM_JWT',
+            authorizerConfiguration=auth_config,
+            description=GATEWAY_DESCRIPTION
+        )
 
-except Exception as e:
-    print(f"Error creating gateway: {e}")
-    exit(1)
+        # Print the gateway ID and other information
+        gateway_id = create_response.get('gatewayId')
+        gateway_arn = create_response.get('gatewayArn')
+        print(f"Gateway created successfully!")
+        print(f"Gateway ID: {gateway_id}")
+        print(f"Gateway ARN: {gateway_arn}")
+        print(f"Creation Time: {create_response.get('creationTime')}")
+
+        # Update the .env file with the gateway information
+        env_file_path = '.env'
+        try:
+            if gateway_id:
+                set_key(env_file_path, 'GATEWAY_ID', gateway_id)
+                set_key(env_file_path, 'GATEWAY_IDENTIFIER', gateway_id)
+                print(f"Updated .env file with GATEWAY_ID: {gateway_id}")
+            
+            if gateway_arn:
+                set_key(env_file_path, 'GATEWAY_ARN', gateway_arn)
+                print(f"Updated .env file with GATEWAY_ARN: {gateway_arn}")
+                
+        except Exception as e:
+            print(f"Warning: Failed to update .env file: {e}")
+
+    except Exception as e:
+        print(f"Error creating gateway: {e}")
+        exit(1)
