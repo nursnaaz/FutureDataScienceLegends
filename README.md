@@ -11,14 +11,19 @@
 
 - [🎯 About](#about)
 - [🛠️ Prerequisites](#prerequisites)  
-- [🗺️ Learning Roadmap](#roadmap)
+- [🗺️ Learning Roadmap](#learning-roadmap)
 - [📚 Curriculum](#curriculum)
+- [🚀 Quick Start Guide](#quick-start-guide)
 - [🐍 Python for Data Science](#python-for-data-science)
 - [📊 Statistics](#introduction-to-statistics)
 - [🤖 Machine Learning](#machine-learning)
 - [🧠 Deep Learning](#deep-learning)
 - [🔤 Natural Language Processing](#natural-language-processing)
 - [🎨 Generative AI](#generative-ai)
+- [🚀 Enterprise AI](#enterprise-ai--advanced-applications)
+- [🎆 Your Journey](#your-journey-to-data-science-mastery)
+- [🤝 Community & Support](#community--support)
+- [🎆 Ready to Begin?](#ready-to-begin-your-legend)
 
 ## About
 
