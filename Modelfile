@@ -1,0 +1,4 @@
+FROM MFDoom/deepseek-r1-tool-calling:1.5b
+PARAMETER num_ctx 4096
+PARAMETER temperature 0.7
+PARAMETER reasoning false

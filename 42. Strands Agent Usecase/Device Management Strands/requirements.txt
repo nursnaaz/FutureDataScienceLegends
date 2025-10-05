@@ -1,0 +1,7 @@
+
+pandas>=2.0,<3.0
+fastapi>=0.100,<1.0
+uvicorn[standard]>=0.23,<1.0
+pydantic>=2.0,<3.0
+strands-agents[ollama]
+strands-agents-tools

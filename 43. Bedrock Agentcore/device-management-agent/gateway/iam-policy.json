@@ -1,0 +1,47 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "BedrockAgentcorePermissions",
+            "Effect": "Allow",
+            "Action": [
+                "bedrock-agentcore:*"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "IAMPassRolePermission",
+            "Effect": "Allow",
+            "Action": [
+                "iam:PassRole"
+            ],
+            "Resource": "*",
+            "Condition": {
+                "StringEquals": {
+                    "iam:PassedToService": "bedrock-agentcore.amazonaws.com"
+                }
+            }
+        },
+        {
+            "Sid": "LambdaInvokePermissions",
+            "Effect": "Allow",
+            "Action": [
+                "lambda:InvokeFunction",
+                "lambda:GetFunction"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "CloudWatchLogsPermissions",
+            "Effect": "Allow",
+            "Action": [
+                "logs:CreateLogGroup",
+                "logs:CreateLogStream",
+                "logs:PutLogEvents",
+                "logs:DescribeLogGroups",
+                "logs:DescribeLogStreams"
+            ],
+            "Resource": "*"
+        }
+    ]
+}

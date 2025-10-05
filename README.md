@@ -82,3 +82,20 @@ The Data Science curriculum assumes the learner has taken basic school math and 
 * [Topic Modelling](https://github.com/nursnaaz/FutureDataScienceLegends/tree/main/30.%20Topic%20Modelling)
 * [Seq2Seq Model - Machine Translation](https://github.com/nursnaaz/FutureDataScienceLegends/tree/main/31.%20Seq2Seq%20Model%20-%20Machine%20Translation)
   
+* [Transformers](https://github.com/nursnaaz/FutureDataScienceLegends/tree/main/32.%20Transformer)
+* [BERT](https://github.com/nursnaaz/FutureDataScienceLegends/tree/main/33.%20BERT)  
+* [BART](https://github.com/nursnaaz/FutureDataScienceLegends/tree/main/34.%20BART) 
+
+
+# Generative AI
+* [GPT-1](https://github.com/nursnaaz/FutureDataScienceLegends/tree/main/35.%20GPT-1)
+* [GPT-2](https://github.com/nursnaaz/FutureDataScienceLegends/tree/main/36.%20GPT-2)
+* [GPT-3](https://github.com/nursnaaz/FutureDataScienceLegends/tree/main/37.%20GPT-3)
+
+* [Prompt Engineering](https://github.com/nursnaaz/FutureDataScienceLegends/tree/main/38.%20Prompt%20Engineer)
+* [Vector DB](https://github.com/nursnaaz/FutureDataScienceLegends/tree/main/39.%20Vector%20DB)
+* [LangChain](https://github.com/nursnaaz/FutureDataScienceLegends/tree/main/40.%20Langchain)
+* [RAG](https://github.com/nursnaaz/FutureDataScienceLegends/tree/main/40.%20Langchain/Project%20-%20QA%20on%20Private%20Documents%20(RAG))
+* [LangGraph-Agents](https://github.com/nursnaaz/FutureDataScienceLegends/tree/main/41.%20Langraph/LangGraph%20-%20Agents)
+
+  

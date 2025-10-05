@@ -1,0 +1,31 @@
+default_agent: device_management_agent_29_jul_21
+agents:
+  device_management_agent_29_jul_21:
+    name: device_management_agent_29_jul_21
+    entrypoint: /Users/mohamednoordeenalaudeen/Documents/PersonalGit/FutureDataScienceLegends/43.
+      Bedrock Agentcore/device-management-agent/agent-runtime/strands_agent_runtime.py
+    platform: linux/arm64
+    container_runtime: none
+    aws:
+      execution_role: arn:aws:iam::455820316982:role/AgentGatewayAccessRole
+      execution_role_auto_create: false
+      account: '455820316982'
+      region: us-west-2
+      ecr_repository: 455820316982.dkr.ecr.us-west-2.amazonaws.com/bedrock-agentcore-device_management_agent_29_jul_21
+      ecr_auto_create: false
+      network_configuration:
+        network_mode: PUBLIC
+      protocol_configuration:
+        server_protocol: HTTP
+      observability:
+        enabled: true
+    bedrock_agentcore:
+      agent_id: null
+      agent_arn: null
+      agent_session_id: null
+    codebuild:
+      project_name: bedrock-agentcore-device_management_agent_29_jul_21-builder
+      execution_role: arn:aws:iam::455820316982:role/AmazonBedrockAgentCoreSDKCodeBuild-us-west-2-3d92502f53
+      source_bucket: bedrock-agentcore-codebuild-sources-455820316982-us-west-2
+    authorizer_configuration: null
+    oauth_configuration: null
